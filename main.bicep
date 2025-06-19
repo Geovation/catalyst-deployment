@@ -7,11 +7,11 @@ param storageAccounts_catalystonsproxyapistore_name string = 'catalystonsproxyap
 param workspaces_catalyst_log_analytics_name string = 'catalyst-log-analytics'
 param serverfarms_ASP_catalyst_ons_proxy_api_serviceplan_name string = 'catalyst_ons_proxy_api_serviceplan'
 param serverfarms_ASP_catalyst_ngd_wrapper_serviceplan_name string = 'catalyst_ngd_wrapper_serviceplan'
+param ngdWrappersFunctionsPackageUri string = 'https://raw.githubusercontent.com/Geovation/catalyst-azure/refs/heads/main/catalyst-ngd-wrapper-functions-python-app.zip'
 
-resource workspaces_catalyst_log_analytics_name_resource 'Microsoft.OperationalInsights/workspaces@2025-02-01' = {
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' = {
   name: workspaces_catalyst_log_analytics_name
   location: 'ukwest'
-  tags: {}
   properties: {
     sku: {
       name: 'pergb2018'
@@ -30,10 +30,9 @@ resource workspaces_catalyst_log_analytics_name_resource 'Microsoft.OperationalI
   }
 }
 
-resource storageAccounts_catalystngdwrappersstore_name_resource 'Microsoft.Storage/storageAccounts@2024-01-01' = {
+resource ngdWrapperStorage 'Microsoft.Storage/storageAccounts@2024-01-01' = {
   name: storageAccounts_catalystngdwrappersstore_name
   location: 'ukwest'
-  tags: {}
   sku: {
     name: 'Standard_LRS'
     tier: 'Standard'
@@ -68,10 +67,9 @@ resource storageAccounts_catalystngdwrappersstore_name_resource 'Microsoft.Stora
   }
 }
 
-resource storageAccounts_catalystonsproxyapistore_name_resource 'Microsoft.Storage/storageAccounts@2024-01-01' = {
+resource onsProxyStorage 'Microsoft.Storage/storageAccounts@2024-01-01' = {
   name: storageAccounts_catalystonsproxyapistore_name
   location: 'ukwest'
-  tags: {}
   sku: {
     name: 'Standard_LRS'
     tier: 'Standard'
@@ -106,10 +104,9 @@ resource storageAccounts_catalystonsproxyapistore_name_resource 'Microsoft.Stora
   }
 }
 
-resource serverfarms_ASP_catalyst_ons_proxy_api_serviceplan_name_resource 'Microsoft.Web/serverfarms@2024-04-01' = {
+resource onsProxyServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
   name: serverfarms_ASP_catalyst_ons_proxy_api_serviceplan_name
   location: 'UK West'
-  tags: {}
   sku: {
     name: 'Y1'
     tier: 'Dynamic'
@@ -132,10 +129,9 @@ resource serverfarms_ASP_catalyst_ons_proxy_api_serviceplan_name_resource 'Micro
   }
 }
 
-resource serverfarms_ASP_catalyst_ngd_wrapper_serviceplan_name_resource 'Microsoft.Web/serverfarms@2024-04-01' = {
+resource ngdWrapperServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
   name: serverfarms_ASP_catalyst_ngd_wrapper_serviceplan_name
   location: 'UK West'
-  tags: {}
   sku: {
     name: 'Y1'
     tier: 'Dynamic'
@@ -145,112 +141,93 @@ resource serverfarms_ASP_catalyst_ngd_wrapper_serviceplan_name_resource 'Microso
   }
   kind: 'functionapp'
   properties: {
-    perSiteScaling: false
-    elasticScaleEnabled: false
-    maximumElasticWorkerCount: 1
-    isSpot: false
     reserved: true
-    isXenon: false
-    hyperV: false
-    targetWorkerCount: 0
-    targetWorkerSizeId: 0
-    zoneRedundant: false
   }
 }
 
-resource components_catalyst_ngd_wrapper_functions_name_resource 'microsoft.insights/components@2020-02-02' = {
+resource ngdWrapperAppInsights 'microsoft.insights/components@2020-02-02' = {
   name: components_catalyst_ngd_wrapper_functions_name
   location: 'ukwest'
-  tags: {}
   kind: 'web'
   properties: {
     Application_Type: 'web'
     Flow_Type: 'Redfield'
     Request_Source: 'IbizaAIExtensionEnablementBlade'
     RetentionInDays: 90
-    WorkspaceResourceId: workspaces_catalyst_log_analytics_name_resource.id
+    WorkspaceResourceId: logAnalyticsWorkspace.id
     IngestionMode: 'LogAnalytics'
     publicNetworkAccessForIngestion: 'Enabled'
     publicNetworkAccessForQuery: 'Enabled'
   }
 }
 
-resource components_catalyst_ons_proxy_api_name_resource 'microsoft.insights/components@2020-02-02' = {
+resource onsProxyAppInsights 'microsoft.insights/components@2020-02-02' = {
   name: components_catalyst_ons_proxy_api_name
   location: 'ukwest'
-  tags: {}
   kind: 'web'
   properties: {
     Application_Type: 'web'
     Flow_Type: 'Redfield'
     Request_Source: 'IbizaAIExtensionEnablementBlade'
     RetentionInDays: 90
-    WorkspaceResourceId: workspaces_catalyst_log_analytics_name_resource.id
+    WorkspaceResourceId: logAnalyticsWorkspace.id
     IngestionMode: 'LogAnalytics'
     publicNetworkAccessForIngestion: 'Enabled'
     publicNetworkAccessForQuery: 'Enabled'
   }
 }
 
-resource sites_catalyst_ngd_wrapper_functions_name_resource 'Microsoft.Web/sites@2024-04-01' = {
+resource ngdWrapperFunctionApp 'Microsoft.Web/sites@2024-04-01' = {
   name: sites_catalyst_ngd_wrapper_functions_name
   location: 'UK West'
-  tags: {}
   kind: 'functionapp,linux'
   properties: {
-    enabled: true
-    hostNameSslStates: [
-      {
-        name: '${sites_catalyst_ngd_wrapper_functions_name}.azurewebsites.net'
-        sslState: 'Disabled'
-        hostType: 'Standard'
-      }
-      {
-        name: '${sites_catalyst_ngd_wrapper_functions_name}.scm.azurewebsites.net'
-        sslState: 'Disabled'
-        hostType: 'Repository'
-      }
-    ]
-    serverFarmId: serverfarms_ASP_catalyst_ngd_wrapper_serviceplan_name_resource.id
+    serverFarmId: ngdWrapperServicePlan.id
     reserved: true
-    isXenon: false
-    hyperV: false
-    dnsConfiguration: {}
-    vnetRouteAllEnabled: false
-    vnetImagePullEnabled: false
-    vnetContentShareEnabled: false
     siteConfig: {
       numberOfWorkers: 1
       linuxFxVersion: 'PYTHON|3.11'
-      acrUseManagedIdentityCreds: false
-      alwaysOn: false
-      http20Enabled: false
-      functionAppScaleLimit: 200
-      minimumElasticInstanceCount: 1
+      appSettings: [
+        {
+          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
+          value: reference(resourceId('Microsoft.Insights/components', sites_catalyst_ngd_wrapper_functions_name), '2015-05-01').InstrumentationKey
+        }
+        {
+          name: 'AzureWebJobsStorage'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccounts_catalystngdwrappersstore_name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${ngdWrapperStorage.listKeys().keys[0].value}'
+        }
+        {
+          name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccounts_catalystngdwrappersstore_name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${ngdWrapperStorage.listKeys().keys[0].value}'
+        }
+        {
+          name: 'WEBSITE_CONTENTSHARE'
+          value: toLower(sites_catalyst_ngd_wrapper_functions_name)
+        }
+        {
+          name: 'FUNCTIONS_EXTENSION_VERSION'
+          value: '~4'
+        }
+        {
+          name: 'FUNCTIONS_WORKER_RUNTIME'
+          value: 'python'
+        }
+        {
+          name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
+          value: 'true'
+        }
+        {
+          name: 'ENABLE_ORYX_BUILD'
+          value: 'true'
+        }
+      ]
     }
-    scmSiteAlsoStopped: false
-    clientAffinityEnabled: false
-    clientCertEnabled: false
-    clientCertMode: 'Required'
-    hostNamesDisabled: false
-    ipMode: 'IPv4'
-    vnetBackupRestoreEnabled: false
-    customDomainVerificationId: 'E419F9B1DCCA4BC29CDFB13EA6FF14EB219BE5A719EAD6C23BEC86CE6917D221'
-    containerSize: 1536
-    dailyMemoryTimeQuota: 0
-    httpsOnly: true
-    endToEndEncryptionEnabled: false
-    redundancyMode: 'None'
-    publicNetworkAccess: 'Enabled'
-    storageAccountRequired: false
-    keyVaultReferenceIdentity: 'SystemAssigned'
   }
 }
 
-resource sites_catalyst_ons_proxy_api_name_resource 'Microsoft.Web/sites@2024-04-01' = {
+resource onsProxyFunctionApp 'Microsoft.Web/sites@2024-04-01' = {
   name: sites_catalyst_ons_proxy_api_name
   location: 'UK West'
-  tags: {}
   kind: 'functionapp,linux'
   properties: {
     enabled: true
@@ -266,7 +243,7 @@ resource sites_catalyst_ons_proxy_api_name_resource 'Microsoft.Web/sites@2024-04
         hostType: 'Repository'
       }
     ]
-    serverFarmId: serverfarms_ASP_catalyst_ons_proxy_api_serviceplan_name_resource.id
+    serverFarmId: onsProxyServicePlan.id
     reserved: true
     isXenon: false
     hyperV: false
@@ -302,179 +279,10 @@ resource sites_catalyst_ons_proxy_api_name_resource 'Microsoft.Web/sites@2024-04
   }
 }
 
-resource sites_catalyst_ngd_wrapper_functions_name_web 'Microsoft.Web/sites/config@2024-04-01' = {
-  parent: sites_catalyst_ngd_wrapper_functions_name_resource
-  name: 'web'
-  location: 'UK West'
-  tags: {}
+resource ngdWrapperZipDeploy 'Microsoft.Web/sites/extensions@2022-03-01' = {
+  parent: ngdWrapperFunctionApp
+  name: any('zipdeploy')
   properties: {
-    numberOfWorkers: 1
-    defaultDocuments: [
-      'Default.htm'
-      'Default.html'
-      'Default.asp'
-      'index.htm'
-      'index.html'
-      'iisstart.htm'
-      'default.aspx'
-      'index.php'
-    ]
-    netFrameworkVersion: 'v4.0'
-    linuxFxVersion: 'PYTHON|3.11'
-    requestTracingEnabled: false
-    remoteDebuggingEnabled: false
-    httpLoggingEnabled: false
-    acrUseManagedIdentityCreds: false
-    logsDirectorySizeLimit: 35
-    detailedErrorLoggingEnabled: false
-    publishingUsername: '$catalyst-ngd-wrapper-functions'
-    scmType: 'GitHubAction'
-    use32BitWorkerProcess: false
-    webSocketsEnabled: false
-    alwaysOn: false
-    managedPipelineMode: 'Integrated'
-    virtualApplications: [
-      {
-        virtualPath: '/'
-        physicalPath: 'site\\wwwroot'
-        preloadEnabled: false
-      }
-    ]
-    loadBalancing: 'LeastRequests'
-    experiments: {
-      rampUpRules: []
-    }
-    autoHealEnabled: false
-    vnetRouteAllEnabled: false
-    vnetPrivatePortsCount: 0
-    publicNetworkAccess: 'Enabled'
-    cors: {
-      allowedOrigins: [
-        'https://portal.azure.com'
-      ]
-      supportCredentials: false
-    }
-    localMySqlEnabled: false
-    ipSecurityRestrictions: [
-      {
-        ipAddress: 'Any'
-        action: 'Allow'
-        priority: 2147483647
-        name: 'Allow all'
-        description: 'Allow all access'
-      }
-    ]
-    scmIpSecurityRestrictions: [
-      {
-        ipAddress: 'Any'
-        action: 'Allow'
-        priority: 2147483647
-        name: 'Allow all'
-        description: 'Allow all access'
-      }
-    ]
-    scmIpSecurityRestrictionsUseMain: false
-    http20Enabled: false
-    minTlsVersion: '1.2'
-    scmMinTlsVersion: '1.2'
-    ftpsState: 'FtpsOnly'
-    preWarmedInstanceCount: 0
-    functionAppScaleLimit: 200
-    functionsRuntimeScaleMonitoringEnabled: false
-    minimumElasticInstanceCount: 1
-    azureStorageAccounts: {}
-  }
-}
-
-resource sites_catalyst_ons_proxy_api_name_web 'Microsoft.Web/sites/config@2024-04-01' = {
-  parent: sites_catalyst_ons_proxy_api_name_resource
-  name: 'web'
-  location: 'UK West'
-  tags: {}
-  properties: {
-    numberOfWorkers: 1
-    defaultDocuments: [
-      'Default.htm'
-      'Default.html'
-      'Default.asp'
-      'index.htm'
-      'index.html'
-      'iisstart.htm'
-      'default.aspx'
-      'index.php'
-    ]
-    netFrameworkVersion: 'v4.0'
-    linuxFxVersion: 'PYTHON|3.11'
-    requestTracingEnabled: false
-    remoteDebuggingEnabled: false
-    httpLoggingEnabled: false
-    acrUseManagedIdentityCreds: false
-    logsDirectorySizeLimit: 35
-    detailedErrorLoggingEnabled: false
-    publishingUsername: '$catalyst-ons-proxy-api'
-    scmType: 'GitHubAction'
-    use32BitWorkerProcess: false
-    webSocketsEnabled: false
-    alwaysOn: false
-    managedPipelineMode: 'Integrated'
-    virtualApplications: [
-      {
-        virtualPath: '/'
-        physicalPath: 'site\\wwwroot'
-        preloadEnabled: false
-      }
-    ]
-    loadBalancing: 'LeastRequests'
-    experiments: {
-      rampUpRules: []
-    }
-    autoHealEnabled: false
-    vnetRouteAllEnabled: false
-    vnetPrivatePortsCount: 0
-    publicNetworkAccess: 'Enabled'
-    cors: {
-      allowedOrigins: [
-        'https://portal.azure.com'
-      ]
-      supportCredentials: false
-    }
-    localMySqlEnabled: false
-    ipSecurityRestrictions: [
-      {
-        ipAddress: 'Any'
-        action: 'Allow'
-        priority: 2147483647
-        name: 'Allow all'
-        description: 'Allow all access'
-      }
-    ]
-    scmIpSecurityRestrictions: [
-      {
-        ipAddress: 'Any'
-        action: 'Allow'
-        priority: 2147483647
-        name: 'Allow all'
-        description: 'Allow all access'
-      }
-    ]
-    scmIpSecurityRestrictionsUseMain: false
-    http20Enabled: false
-    minTlsVersion: '1.2'
-    scmMinTlsVersion: '1.2'
-    ftpsState: 'FtpsOnly'
-    preWarmedInstanceCount: 0
-    functionAppScaleLimit: 200
-    functionsRuntimeScaleMonitoringEnabled: false
-    minimumElasticInstanceCount: 1
-    azureStorageAccounts: {}
-  }
-}
-
-// Create a ZipDeployment for the NGD Wrapper Functions
-resource sites_catalyst_ngd_wrapper_functions_name_zipdeploy 'Microsoft.Web/sites/extensions@2024-04-01' = {
-  parent: sites_catalyst_ngd_wrapper_functions_name_resource
-  name: any('ZipDeploy')
-  properties: {
-    packageUri: 'https://raw.githubusercontent.com/Geovation/catalyst-azure/refs/heads/main/catalyst-ngd-wrapper-functions-python-app.zip'
+    packageUri: ngdWrappersFunctionsPackageUri
   }
 }
