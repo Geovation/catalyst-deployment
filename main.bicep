@@ -35,36 +35,8 @@ resource ngdWrapperStorage 'Microsoft.Storage/storageAccounts@2024-01-01' = {
   location: 'ukwest'
   sku: {
     name: 'Standard_LRS'
-    tier: 'Standard'
   }
   kind: 'Storage'
-  properties: {
-    defaultToOAuthAuthentication: true
-    publicNetworkAccess: 'Enabled'
-    allowCrossTenantReplication: false
-    minimumTlsVersion: 'TLS1_2'
-    allowBlobPublicAccess: false
-    networkAcls: {
-      bypass: 'AzureServices'
-      virtualNetworkRules: []
-      ipRules: []
-      defaultAction: 'Allow'
-    }
-    supportsHttpsTrafficOnly: true
-    encryption: {
-      services: {
-        file: {
-          keyType: 'Account'
-          enabled: true
-        }
-        blob: {
-          keyType: 'Account'
-          enabled: true
-        }
-      }
-      keySource: 'Microsoft.Storage'
-    }
-  }
 }
 
 resource onsProxyStorage 'Microsoft.Storage/storageAccounts@2024-01-01' = {
@@ -72,36 +44,8 @@ resource onsProxyStorage 'Microsoft.Storage/storageAccounts@2024-01-01' = {
   location: 'ukwest'
   sku: {
     name: 'Standard_LRS'
-    tier: 'Standard'
   }
   kind: 'Storage'
-  properties: {
-    defaultToOAuthAuthentication: true
-    publicNetworkAccess: 'Enabled'
-    allowCrossTenantReplication: false
-    minimumTlsVersion: 'TLS1_2'
-    allowBlobPublicAccess: false
-    networkAcls: {
-      bypass: 'AzureServices'
-      virtualNetworkRules: []
-      ipRules: []
-      defaultAction: 'Allow'
-    }
-    supportsHttpsTrafficOnly: true
-    encryption: {
-      services: {
-        file: {
-          keyType: 'Account'
-          enabled: true
-        }
-        blob: {
-          keyType: 'Account'
-          enabled: true
-        }
-      }
-      keySource: 'Microsoft.Storage'
-    }
-  }
 }
 
 resource onsProxyServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
@@ -216,10 +160,6 @@ resource ngdWrapperFunctionApp 'Microsoft.Web/sites@2024-04-01' = {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
           value: 'true'
         }
-        {
-          name: 'ENABLE_ORYX_BUILD'
-          value: 'true'
-        }
       ]
     }
   }
@@ -282,6 +222,7 @@ resource onsProxyFunctionApp 'Microsoft.Web/sites@2024-04-01' = {
 resource ngdWrapperZipDeploy 'Microsoft.Web/sites/extensions@2022-03-01' = {
   parent: ngdWrapperFunctionApp
   name: any('zipdeploy')
+  location: 'UK West'
   properties: {
     packageUri: ngdWrappersFunctionsPackageUri
   }

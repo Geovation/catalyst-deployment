@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.36.1.42791",
-      "templateHash": "1166598138776188569"
+      "templateHash": "11619618605907971423"
     }
   },
   "parameters": {
@@ -79,37 +79,9 @@
       "name": "[parameters('storageAccounts_catalystngdwrappersstore_name')]",
       "location": "ukwest",
       "sku": {
-        "name": "Standard_LRS",
-        "tier": "Standard"
+        "name": "Standard_LRS"
       },
-      "kind": "Storage",
-      "properties": {
-        "defaultToOAuthAuthentication": true,
-        "publicNetworkAccess": "Enabled",
-        "allowCrossTenantReplication": false,
-        "minimumTlsVersion": "TLS1_2",
-        "allowBlobPublicAccess": false,
-        "networkAcls": {
-          "bypass": "AzureServices",
-          "virtualNetworkRules": [],
-          "ipRules": [],
-          "defaultAction": "Allow"
-        },
-        "supportsHttpsTrafficOnly": true,
-        "encryption": {
-          "services": {
-            "file": {
-              "keyType": "Account",
-              "enabled": true
-            },
-            "blob": {
-              "keyType": "Account",
-              "enabled": true
-            }
-          },
-          "keySource": "Microsoft.Storage"
-        }
-      }
+      "kind": "Storage"
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
@@ -117,37 +89,9 @@
       "name": "[parameters('storageAccounts_catalystonsproxyapistore_name')]",
       "location": "ukwest",
       "sku": {
-        "name": "Standard_LRS",
-        "tier": "Standard"
+        "name": "Standard_LRS"
       },
-      "kind": "Storage",
-      "properties": {
-        "defaultToOAuthAuthentication": true,
-        "publicNetworkAccess": "Enabled",
-        "allowCrossTenantReplication": false,
-        "minimumTlsVersion": "TLS1_2",
-        "allowBlobPublicAccess": false,
-        "networkAcls": {
-          "bypass": "AzureServices",
-          "virtualNetworkRules": [],
-          "ipRules": [],
-          "defaultAction": "Allow"
-        },
-        "supportsHttpsTrafficOnly": true,
-        "encryption": {
-          "services": {
-            "file": {
-              "keyType": "Account",
-              "enabled": true
-            },
-            "blob": {
-              "keyType": "Account",
-              "enabled": true
-            }
-          },
-          "keySource": "Microsoft.Storage"
-        }
-      }
+      "kind": "Storage"
     },
     {
       "type": "Microsoft.Web/serverfarms",
@@ -272,10 +216,6 @@
             {
               "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
               "value": "true"
-            },
-            {
-              "name": "ENABLE_ORYX_BUILD",
-              "value": "true"
             }
           ]
         }
@@ -347,6 +287,7 @@
       "type": "Microsoft.Web/sites/extensions",
       "apiVersion": "2022-03-01",
       "name": "[format('{0}/{1}', parameters('sites_catalyst_ngd_wrapper_functions_name'), 'zipdeploy')]",
+      "location": "UK West",
       "properties": {
         "packageUri": "[parameters('ngdWrappersFunctionsPackageUri')]"
       },
