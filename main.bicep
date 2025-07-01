@@ -1,9 +1,8 @@
 @description('Name of the workspace - this name will be used in resources')
 param workspaceName string = 'catalyst'
 
-@description('Location for all resources')
-param location string = resourceGroup().location
-
+@description('Location for all resources.')
+param location string = 'UK West'
 @description('Name of the ONS Proxy API resources')
 param onsProxyApiName string = 'ons-proxy-api'
 
@@ -12,16 +11,16 @@ param ngdWrapperName string = 'ngd-wrapper-functions'
 
 var logAnalyticsName = toLower('${workspaceName}-log-analytics')
 
-var onsProxyApiServicePlanName = '${workspaceName}-${onsProxyApiName}-serviceplan'
-var onsProxyApiFunctionName = '${workspaceName}-${onsProxyApiName}-function'
-var onsProxyApiStoreName = replace(toLower('${workspaceName}${onsProxyApiName}store'), '-', '')
-var onsProxyApiInsightsName = '${workspaceName}-${onsProxyApiName}-insights'
-var onsProxyFunctionsPackageUri = 'https://raw.githubusercontent.com/Geovation/catalyst-azure/refs/heads/main/catalyst-ons-proxy-api-functions-python-app.zip'
+var onsProxyApiServicePlanName = '${onsProxyApiName}-serviceplan'
+var onsProxyApiFunctionName = '${onsProxyApiName}-function'
+var onsProxyApiStoreName = replace(toLower('${onsProxyApiName}store'), '-', '')
+var onsProxyApiInsightsName = '${onsProxyApiName}-insights'
+var onsProxyFunctionsPackageUri = 'https://raw.githubusercontent.com/Geovation/catalyst-azure/refs/heads/main/catalyst-ons-proxy-api-azure-0.1.0.zip'
 
-var ngdWrapperServicePlanName = '${workspaceName}-${ngdWrapperName}-serviceplan'
-var ngdWrapperFunctionName = '${workspaceName}-${ngdWrapperName}-function'
-var ngdWrapperStoreName = replace(toLower('${workspaceName}${ngdWrapperName}store'), '-', '')
-var ngdWrapperInsightsName = '${workspaceName}-${ngdWrapperName}-insights'
+var ngdWrapperServicePlanName = '${ngdWrapperName}-serviceplan'
+var ngdWrapperFunctionName = '${ngdWrapperName}-function'
+var ngdWrapperStoreName = replace(toLower('${ngdWrapperName}store'), '-', '')
+var ngdWrapperInsightsName = '${ngdWrapperName}-insights'
 var ngdWrapperFunctionsPackageUri = 'https://raw.githubusercontent.com/Geovation/catalyst-azure/refs/heads/main/catalyst-ngd-wrapper-functions-python-app.zip'
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' = {
@@ -129,7 +128,7 @@ resource ngdWrapperFunctionApp 'Microsoft.Web/sites@2024-04-01' = {
       appSettings: [
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: reference(resourceId('Microsoft.Insights/components', ngdWrapperFunctionName), '2015-05-01').InstrumentationKey
+          value: reference(resourceId('Microsoft.Insights/components', ngdWrapperInsightsName), '2015-05-01').InstrumentationKey
         }
         {
           name: 'AzureWebJobsStorage'
@@ -173,7 +172,7 @@ resource onsProxyFunctionApp 'Microsoft.Web/sites@2024-04-01' = {
       appSettings: [
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: reference(resourceId('Microsoft.Insights/components', onsProxyApiFunctionName), '2015-05-01').InstrumentationKey
+          value: reference(resourceId('Microsoft.Insights/components', onsProxyApiInsightsName), '2015-05-01').InstrumentationKey
         }
         {
           name: 'AzureWebJobsStorage'
