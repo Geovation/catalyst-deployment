@@ -1,0 +1,230 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  CatalyST tool deployment on AWS. Includes two Lambda functions, one for NGD Wrapper and one for the ONS API proxy
+Parameters:
+  NGDWrapperLambdaFunctionName:
+    Type: String
+    MinLength: "1"
+    MaxLength: "64"
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+    Description: The name of the NGD Wrapper Lambda function
+    Default: Lambda-NGDWrapper
+  NGDWrapperLambdaRoleName:
+    Type: String
+    MinLength: "1"
+    MaxLength: "64"
+    AllowedPattern: '[\w+=,.@-]+'
+    Description: The name of the IAM role used as the NGD Wrapper execution role
+    Default: Lambda-NGDWrapper-Role
+  NGDWrapperLambdaPolicyName:
+    Type: String
+    MinLength: "1"
+    MaxLength: "128"
+    AllowedPattern: '[\w+=,.@-]+'
+    Default: Lambda-NGDWrapper-Policy
+  ONSProxyLambdaFunctionName:
+    Type: String
+    MinLength: "1"
+    MaxLength: "64"
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+    Description: The name of the ONS Proxy Lambda function
+    Default: Lambda-ONSProxy
+  ONSProxyLambdaRoleName:
+    Type: String
+    MinLength: "1"
+    MaxLength: "64"
+    AllowedPattern: '[\w+=,.@-]+'
+    Description: The name of the IAM role used as the Lambda execution role
+    Default: Lambda-ONSProxy-Role
+  ONSProxyLambdaPolicyName:
+    Type: String
+    MinLength: "1"
+    MaxLength: "128"
+    AllowedPattern: '[\w+=,.@-]+'
+    Default: Lambda-ONSProxy-Policy
+
+Resources:
+  NGDWrapperLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref NGDWrapperLambdaRoleName
+      Description: An execution role for the NGD Wrapper Lambda function
+      ManagedPolicyArns:
+        - !Ref NGDWrapperLambdaPolicy
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+
+  NGDWrapperLambdaPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Ref NGDWrapperLambdaPolicyName
+      Description: Managed policy for a Lambda function launched by CloudFormation
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "logs:CreateLogStream"
+              - "logs:PutLogEvents"
+            Resource:
+              !Join [
+                "",
+                [
+                  "arn:",
+                  !Ref AWS::Partition,
+                  ":logs:",
+                  !Ref AWS::Region,
+                  ":",
+                  !Ref AWS::AccountId,
+                  ":log-group:/aws/lambda/",
+                  !Ref NGDWrapperLambdaFunctionName,
+                  ":*",
+                ],
+              ]
+          - Effect: Allow
+            Action:
+              - "logs:CreateLogGroup"
+            Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
+
+  NGDWrapperLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ["", ["/aws/lambda/", !Ref NGDWrapperLambdaFunctionName]]
+      RetentionInDays: 30
+
+  NGDWrapperLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Provides a wrapper for the NGD API
+      FunctionName: !Ref NGDWrapperLambdaFunctionName
+      Handler: index.lambda_handler
+      MemorySize: 128
+      Runtime: python3.8
+      Role: !GetAtt "NGDWrapperLambdaRole.Arn"
+      Timeout: 240
+      Environment:
+        Variables:
+      Code:
+        ZipFile: "https://raw.githubusercontent.com/Geovation/catalyst-azure/refs/heads/main/aws/sample.zip"
+
+  NGDWrapperLambdaUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      AuthType: NONE
+      TargetFunctionArn: !GetAtt "NGDWrapperLambdaFunction.Arn"
+      Cors:
+        AllowCredentials: false
+        AllowHeaders:
+          - "*"
+        AllowMethods:
+          - GET
+          - POST
+        AllowOrigins:
+          - "*"
+
+  NGDWrapperLambdaUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref NGDWrapperLambdaFunctionName
+      Principal: "*"
+      FunctionUrlAuthType: NONE
+
+  ONSProxyLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref ONSProxyLambdaRoleName
+      Description: An execution role for the ONS Proxy API
+      ManagedPolicyArns:
+        - !Ref ONSProxyLambdaPolicy
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+
+  ONSProxyLambdaPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Ref ONSProxyLambdaPolicyName
+      Description: Managed policy for a Lambda function
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "logs:CreateLogStream"
+              - "logs:PutLogEvents"
+            Resource:
+              !Join [
+                "",
+                [
+                  "arn:",
+                  !Ref AWS::Partition,
+                  ":logs:",
+                  !Ref AWS::Region,
+                  ":",
+                  !Ref AWS::AccountId,
+                  ":log-group:/aws/lambda/",
+                  !Ref ONSProxyLambdaFunctionName,
+                  ":*",
+                ],
+              ]
+          - Effect: Allow
+            Action:
+              - "logs:CreateLogGroup"
+            Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
+
+  ONSProxyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ["", ["/aws/lambda/", !Ref ONSProxyLambdaFunctionName]]
+      RetentionInDays: 30
+
+  ONSProxyLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Proxy for the ONS API
+      FunctionName: !Ref ONSProxyLambdaFunctionName
+      Handler: index.lambda_handler
+      MemorySize: 128
+      Runtime: python3.8
+      Role: !GetAtt "LambdaRole.Arn"
+      Timeout: 240
+      Environment:
+        Variables:
+      Code:
+        ZipFile: "https://raw.githubusercontent.com/Geovation/catalyst-azure/refs/heads/main/aws/sample.zip"
+
+  ONSProxyLambdaUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      AuthType: NONE
+      TargetFunctionArn: !GetAtt "ONSProxyLambdaFunction.Arn"
+      Cors:
+        AllowCredentials: false
+        AllowHeaders:
+          - "*"
+        AllowMethods:
+          - GET
+          - POST
+        AllowOrigins:
+          - "*"
+
+  ONSProxyLambdaUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref ONSProxyLambdaFunctionName
+      Principal: "*"
+      FunctionUrlAuthType: NONE
