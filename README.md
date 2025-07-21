@@ -1,5 +1,15 @@
-# Catalyst on Azure
+# Catalyst deployment
 
-Repository for resources to deploy Catalyst to Azure.
+This repository contains resources to deploy the Catalyst API tools to cloud services, including:
 
-This repository includes templates and instructions to deploy Catalyst to Azure infrastructure.
+- Azure
+- AWS
+
+## Azure
+
+Azure deployment has been written using [Azure Resource Manager (ARM)](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/overview) templates.
+
+
+## AWS
+
+AWS deployment has been written using 

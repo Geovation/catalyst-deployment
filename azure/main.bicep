@@ -15,13 +15,13 @@ var onsProxyApiServicePlanName = '${onsProxyApiName}-serviceplan'
 var onsProxyApiFunctionName = '${onsProxyApiName}-function'
 var onsProxyApiStoreName = replace(toLower('${onsProxyApiName}store'), '-', '')
 var onsProxyApiInsightsName = '${onsProxyApiName}-insights'
-var onsProxyFunctionsPackageUri = 'https://raw.githubusercontent.com/Geovation/catalyst-azure/refs/heads/main/catalyst-ons-proxy-api-azure-0.1.0.zip'
+var onsProxyFunctionsPackageUri = 'https://raw.githubusercontent.com/Geovation/catalyst-azure/refs/heads/main/azure/catalyst-ons-proxy-api-azure-0.1.0.zip'
 
 var ngdWrapperServicePlanName = '${ngdWrapperName}-serviceplan'
 var ngdWrapperFunctionName = '${ngdWrapperName}-function'
 var ngdWrapperStoreName = replace(toLower('${ngdWrapperName}store'), '-', '')
 var ngdWrapperInsightsName = '${ngdWrapperName}-insights'
-var ngdWrapperFunctionsPackageUri = 'https://raw.githubusercontent.com/Geovation/catalyst-azure/refs/heads/main/catalyst-ngd-wrapper-functions-python-app.zip'
+var ngdWrapperFunctionsPackageUri = 'https://raw.githubusercontent.com/Geovation/catalyst-azure/refs/heads/main/azure/catalyst-ngd-wrapper-functions-python-app.zip'
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' = {
   name: logAnalyticsName
