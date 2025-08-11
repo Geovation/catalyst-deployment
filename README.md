@@ -1,3 +1,7 @@
+# Catalyst
+
+Catalyst is a set of tools created to make it easier to deploy infrastructure that uses Ordnance Survey data 
+
 # Catalyst deployment
 
 This repository contains resources to deploy the Catalyst API tools to cloud services, including:
