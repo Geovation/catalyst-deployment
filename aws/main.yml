@@ -76,20 +76,7 @@ Resources:
               - "logs:CreateLogStream"
               - "logs:PutLogEvents"
             Resource:
-              !Join [
-                "",
-                [
-                  "arn:",
-                  !Ref AWS::Partition,
-                  ":logs:",
-                  !Ref AWS::Region,
-                  ":",
-                  !Ref AWS::AccountId,
-                  ":log-group:/aws/lambda/",
-                  !Ref NGDWrapperLambdaFunctionName,
-                  ":*",
-                ],
-              ]
+              Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*:*"
           - Effect: Allow
             Action:
               - "logs:CreateLogGroup"
@@ -169,20 +156,7 @@ Resources:
               - "logs:CreateLogStream"
               - "logs:PutLogEvents"
             Resource:
-              !Join [
-                "",
-                [
-                  "arn:",
-                  !Ref AWS::Partition,
-                  ":logs:",
-                  !Ref AWS::Region,
-                  ":",
-                  !Ref AWS::AccountId,
-                  ":log-group:/aws/lambda/",
-                  !Ref ONSGeographiesLambdaFunctionName,
-                  ":*",
-                ],
-              ]
+              !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*:*"
           - Effect: Allow
             Action:
               - "logs:CreateLogGroup"
