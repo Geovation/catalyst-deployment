@@ -3,14 +3,14 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >
   CatalyST tool deployment on AWS. Includes two Lambda functions, one for NGD Wrapper and one for the ONS Geographies proxy
 Parameters:
-  NGDWrapperLambdaFunctionName:
+  NGDWrapperLambdaFunctionName: # Name of the NGD Wrapper Lambda function
     Type: String
     MinLength: "1"
     MaxLength: "64"
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
     Description: The name of the NGD Wrapper Lambda function
     Default: Lambda-NGDWrapper
-  NGDWrapperLambdaRoleName:
+  NGDWrapperLambdaRoleName: 
     Type: String
     MinLength: "1"
     MaxLength: "64"
@@ -45,6 +45,7 @@ Parameters:
     Default: Lambda-ONSGeographies-Policy
 
 Resources:
+
   NGDWrapperLambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -63,6 +64,7 @@ Resources:
 
   NGDWrapperLambdaPolicy:
     Type: AWS::IAM::ManagedPolicy
+    DependsOn: NGDWrapperLambdaFunction
     Properties:
       ManagedPolicyName: !Ref NGDWrapperLambdaPolicyName
       Description: Managed policy for a Lambda function launched by CloudFormation
@@ -96,23 +98,8 @@ Resources:
   NGDWrapperLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Join ["", ["/aws/lambda/", !Ref NGDWrapperLambdaFunctionName]]
+      LogGroupName: !Join ["", ["/aws/lambda/", !Ref NGDWrapperLambdaFunction]]
       RetentionInDays: 30
-
-  NGDWrapperLambdaFunction:
-    Type: AWS::Lambda::Function
-    Properties:
-      Description: Provides a wrapper for the NGD API
-      FunctionName: !Ref NGDWrapperLambdaFunctionName
-      Handler: lambda_function.lambda_handler
-      MemorySize: 128
-      Runtime: python3.13
-      Role: !GetAtt "NGDWrapperLambdaRole.Arn"
-      Timeout: 240
-      Environment:
-        Variables:
-      Code:
-        ZipFile: "https://raw.githubusercontent.com/geovation/catalyst-deployment/refs/heads/main/aws/sample.zip"
 
   NGDWrapperLambdaUrl:
     Type: AWS::Lambda::Url
@@ -128,12 +115,27 @@ Resources:
           - POST
         AllowOrigins:
           - "*"
+  
+  NGDWrapperLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Provides a wrapper for the NGD API
+      FunctionName: !Ref NGDWrapperLambdaFunctionName
+      Handler: lambda_function.lambda_handler
+      MemorySize: 128
+      Runtime: python3.13
+      Role: !GetAtt "NGDWrapperLambdaRole.Arn"
+      Timeout: 240
+      #Environment:
+        #Variables:
+      Code:
+        ZipFile: "https://raw.githubusercontent.com/geovation/catalyst-deployment/refs/heads/main/aws/sample.zip"
 
   NGDWrapperLambdaUrlPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunctionUrl
-      FunctionName: !Ref NGDWrapperLambdaFunctionName
+      FunctionName: !Ref NGDWrapperLambdaFunction
       Principal: "*"
       FunctionUrlAuthType: NONE
 
@@ -155,6 +157,7 @@ Resources:
 
   ONSGeographiesLambdaPolicy:
     Type: AWS::IAM::ManagedPolicy
+    DependsOn: ONSGeographiesLambdaFunction
     Properties:
       ManagedPolicyName: !Ref ONSGeographiesLambdaPolicyName
       Description: Managed policy for a Lambda function
@@ -188,23 +191,8 @@ Resources:
   ONSGeographiesLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Join ["", ["/aws/lambda/", !Ref ONSGeographiesLambdaFunctionName]]
+      LogGroupName: !Join ["", ["/aws/lambda/", !Ref ONSGeographiesLambdaFunction]]
       RetentionInDays: 30
-
-  ONSGeographiesLambdaFunction:
-    Type: AWS::Lambda::Function
-    Properties:
-      Description: Proxy for the ONS Geographies Proxy
-      FunctionName: !Ref ONSGeographiesLambdaFunctionName
-      Handler: lambda_function.lambda_handler
-      MemorySize: 128
-      Runtime: python3.13
-      Role: !GetAtt "LambdaRole.Arn"
-      Timeout: 240
-      Environment:
-        Variables:
-      Code:
-        ZipFile: "https://raw.githubusercontent.com/geovation/catalyst-deployment/refs/heads/main/aws/sample.zip"
 
   ONSGeographiesLambdaUrl:
     Type: AWS::Lambda::Url
@@ -221,10 +209,25 @@ Resources:
         AllowOrigins:
           - "*"
 
+  ONSGeographiesLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Proxy for the ONS Geographies Proxy
+      FunctionName: !Ref ONSGeographiesLambdaFunctionName
+      Handler: lambda_function.lambda_handler
+      MemorySize: 128
+      Runtime: python3.13
+      Role: !GetAtt "ONSGeographiesLambdaRole.Arn"
+      Timeout: 240
+      #Environment:
+        #Variables:
+      Code:
+        ZipFile: "https://raw.githubusercontent.com/geovation/catalyst-deployment/refs/heads/main/aws/sample.zip"
+
   ONSGeographiesLambdaUrlPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunctionUrl
-      FunctionName: !Ref ONSGeographiesLambdaFunctionName
+      FunctionName: !Ref ONSGeographiesLambdaFunction
       Principal: "*"
       FunctionUrlAuthType: NONE
