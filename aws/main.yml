@@ -201,7 +201,7 @@ Resources:
   ApiGatewayRestApi:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: ApiGateway
+      Name: Catalyst
 
   EndpointBase:
     Type: AWS::ApiGateway::Resource
@@ -251,3 +251,46 @@ Resources:
       ParentId: !Ref EndpointFeaturesCollectionItems
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: '{function}'
+  
+  MethodLatestCollections:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ResourceId: !Ref EndpointLatestCollections
+      RestApiId: !Ref ApiGatewayRestApi
+
+  MethodLatestCollectionsCollection:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ResourceId: !Ref EndpointLatestCollectionsCollection
+      RestApiId: !Ref ApiGatewayRestApi
+  
+  MethodItems:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ResourceId: !Ref EndpointFeaturesCollectionItems
+      RestApiId: !Ref ApiGatewayRestApi
+
+  MethodItems:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ResourceId: !Ref EndpointFeaturesCollectionItemsFunction
+      RestApiId: !Ref ApiGatewayRestApi
+
+  ApiGatewayStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref ApiGatewayRestApi
+      StageName: 'prod'
+      Description: 'CatalyST API Gateway Stage'
