@@ -1,3 +1,5 @@
+// SETTING OF VARIOUS PARAMS
+
 @description('Name of the workspace - this name will be used in resources')
 param workspaceName string = 'catalyst'
 
@@ -10,19 +12,31 @@ param onsGeographiesName string = 'ons-geographies'
 @description('Name of the NGD Wrapper Function resources')
 param ngdWrapperName string = 'ngd-wrapper-functions'
 
+// FOR LOGGING
 var logAnalyticsName = toLower('${workspaceName}-log-analytics')
 
+// SETTING VARIOUS HIGHER LEVEL PARAMS
 var onsGeographiesServicePlanName = '${onsGeographiesName}-serviceplan'
 var onsGeographiesFunctionName = '${onsGeographiesName}-function'
 var onsGeographiesStoreName = replace(toLower('${onsGeographiesName}store'), '-', '')
 var onsGeographiesInsightsName = '${onsGeographiesName}-insights'
+// THE BELOW NEEDS TO BE SET TO LATEST
 var onsGeographiesFunctionsPackageUri = 'https://raw.githubusercontent.com/geovation/catalyst-deployment/refs/heads/main/azure/catalyst-ons-proxy-api-azure-0.1.0.zip'
 
 var ngdWrapperServicePlanName = '${ngdWrapperName}-serviceplan'
 var ngdWrapperFunctionName = '${ngdWrapperName}-function'
 var ngdWrapperStoreName = replace(toLower('${ngdWrapperName}store'), '-', '')
 var ngdWrapperInsightsName = '${ngdWrapperName}-insights'
+// THE BELOW NEEDS TO BE SET TO LATEST
 var ngdWrapperFunctionsPackageUri = 'https://raw.githubusercontent.com/Geovation/catalyst-deployment/refs/heads/main/azure/catalyst-ngd-wrapper-functions-python-app.zip'
+
+// VARIOUS RESOURCES
+// Log Analytics Workspace x1
+// --Zip deployments x2
+// Storage x2
+// Service Plans x2
+// App Insights x2
+// Function App x2
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' = {
   name: logAnalyticsName
