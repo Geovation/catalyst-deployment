@@ -95,7 +95,7 @@ Resources:
       Role: !GetAtt NGDWrapperLambdaRole.Arn
       Timeout: 240
       Code:
-        ZipFile: "https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/v0.1.3-release.zip"
+        ZipFile: "https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/release.zip"
 
   NGDWrapperLambdaUrl:
     Type: AWS::Lambda::Url
