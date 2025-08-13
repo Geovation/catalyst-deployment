@@ -164,6 +164,10 @@ Resources:
     Type: AWS::ApiGateway::RestApi
     Properties:
       Name: Catalyst
+      Description: API Gateway deployment for Geovation Catalyst tools. Deployed through CloudFormation.
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
 
   EndpointBase:
     Type: AWS::ApiGateway::Resource
