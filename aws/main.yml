@@ -203,30 +203,51 @@ Resources:
     Properties:
       Name: ApiGateway
 
-  FeaturesLatestCollectionsResource:
+  EndpointBase:
     Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
       RestApiId: !Ref ApiGatewayRestApi
-      PathPart: 'catalyst/latest-collections'
-  
-  FeaturesLatestCollectionsCollectionResource:
+      PathPart: 'catalyst'
+
+  EndpointLatestCollections:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !GetAtt FeaturesLatestCollectionsResource.Id
+      ParentId: !GetAtt EndpointBase.Id
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: 'latest-collections'
+  
+  EndpointLatestCollectionsCollection:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt EndpointLatestCollections.Id
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: '{collection}'
 
-  FeaturesItemsResource:
+  EndpointFeatures:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
+      ParentId: !GetAtt EndpointBase.Id
       RestApiId: !Ref ApiGatewayRestApi
-      PathPart: 'catalyst/features/{collection}/items'
+      PathPart: 'features'
 
-  FeaturesItemsFunctionResource:
+  EndpointFeaturesCollection:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !GetAtt FeaturesItemsResource.Id
+      ParentId: !GetAtt EndpointFeatures.Id
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: '{collection}'
+
+  EndpointFeaturesCollectionItems:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt EndpointFeaturesCollection.Id
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: 'items'
+
+  EndpointFeaturesCollectionItemsFunction:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt EndpointFeaturesCollectionItems.Id
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: '{function}'
