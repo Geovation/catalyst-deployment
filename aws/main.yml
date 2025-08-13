@@ -197,3 +197,36 @@ Resources:
       FunctionName: !Ref ONSGeographiesLambdaFunction
       Principal: "*"
       FunctionUrlAuthType: NONE
+
+  ApiGatewayRestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: ApiGateway
+
+  FeaturesLatestCollectionsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: 'catalyst/latest-collections'
+  
+  FeaturesLatestCollectionsCollectionResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt FeaturesLatestCollectionsResource.Id
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: '{collection}'
+
+  FeaturesItemsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: 'catalyst/features/{collection}/items'
+
+  FeaturesItemsFunctionResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt FeaturesItemsResource.Id
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: '{function}'
