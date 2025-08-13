@@ -109,31 +109,6 @@ Resources:
       Code:
         ZipFile: "https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/release.zip"
 
-  NGDWrapperLambdaUrl:
-    Type: AWS::Lambda::Url
-    DependsOn: NGDWrapperLambdaFunction
-    Properties:
-      AuthType: NONE
-      TargetFunctionArn: !GetAtt NGDWrapperLambdaFunction.Arn
-      Cors:
-        AllowCredentials: false
-        AllowHeaders:
-          - "*"
-        AllowMethods:
-          - GET
-          - POST
-        AllowOrigins:
-          - "*"
-
-  NGDWrapperLambdaUrlPermission:
-    Type: AWS::Lambda::Permission
-    DependsOn: NGDWrapperLambdaUrl
-    Properties:
-      Action: lambda:InvokeFunctionUrl
-      FunctionName: !Ref NGDWrapperLambdaFunction
-      Principal: "*"
-      FunctionUrlAuthType: NONE
-
   ONSGeographiesLambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -184,31 +159,6 @@ Resources:
       Timeout: 240
       Code:
         ZipFile: "https://raw.githubusercontent.com/geovation/catalyst-deployment/refs/heads/main/aws/sample.zip"
-
-  ONSGeographiesLambdaUrl:
-    Type: AWS::Lambda::Url
-    DependsOn: ONSGeographiesLambdaFunction
-    Properties:
-      AuthType: NONE
-      TargetFunctionArn: !GetAtt ONSGeographiesLambdaFunction.Arn
-      Cors:
-        AllowCredentials: false
-        AllowHeaders:
-          - "*"
-        AllowMethods:
-          - GET
-          - POST
-        AllowOrigins:
-          - "*"
-
-  ONSGeographiesLambdaUrlPermission:
-    Type: AWS::Lambda::Permission
-    DependsOn: ONSGeographiesLambdaUrl
-    Properties:
-      Action: lambda:InvokeFunctionUrl
-      FunctionName: !Ref ONSGeographiesLambdaFunction
-      Principal: "*"
-      FunctionUrlAuthType: NONE
 
   ApiGatewayRestApi:
     Type: AWS::ApiGateway::RestApi
