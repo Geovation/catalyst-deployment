@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
 Description: >
-  CatalyST tool deployment on AWS. Includes two Lambda functions, one for NGD Wrapper and one for the ONS Geographies proxy
+  Catalyst tool deployment on AWS. Includes Lambda functions and an endpoints deployed through API Gateway.
 Parameters:
   NGDWrapperLambdaFunctionName: # Name of the NGD Wrapper Lambda function
     Type: String
@@ -176,6 +176,27 @@ Resources:
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: 'catalyst'
 
+  EndpointONSGeographies:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref EndpointBase
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: 'ons-geographies'
+
+  EndpointONSGeographiesPlaces:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref EndpointONSGeographies
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: 'places'
+
+  EndpointONSGeographiesPlacesOperation:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref EndpointONSGeographiesPlaces
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: '{operation}'
+
   EndpointLatestCollections:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -217,6 +238,21 @@ Resources:
       ParentId: !Ref EndpointFeaturesCollectionItems
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: '{function}'
+
+  MethodONSGeographies:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      HttpMethod: !Ref ApiGatewayHTTPMethod
+      AuthorizationType: NONE
+      ResourceId: !Ref EndpointONSGeographiesPlacesOperation
+      RestApiId: !Ref ApiGatewayRestApi
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: !Ref ApiGatewayHTTPMethod
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt ONSGeographiesLambdaFunction.Arn
   
   MethodLatestCollections:
     Type: AWS::ApiGateway::Method
@@ -285,6 +321,7 @@ Resources:
       - MethodLatestCollectionsCollection
       - MethodItems
       - MethodItemsFunction
+      - MethodONSGeographies
     Properties:
       RestApiId: !Ref ApiGatewayRestApi
       StageName: 'prod'
