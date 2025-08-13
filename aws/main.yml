@@ -43,18 +43,6 @@ Parameters:
     MaxLength: "128"
     AllowedPattern: '[\w+=,.@-]+'
     Default: Lambda-ONSGeographies-Policy
-  ApiGatewayHTTPMethod:
-    Type: String
-    AllowedValues:
-      - GET
-      - POST
-      - PUT
-      - DELETE
-      - PATCH
-      - OPTIONs
-      - HEAD
-      - ANY
-    Default: GET
 
 Resources:
 
@@ -243,13 +231,13 @@ Resources:
     Type: AWS::ApiGateway::Method
     Properties:
       ApiKeyRequired: false
-      HttpMethod: !Ref ApiGatewayHTTPMethod
+      HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointONSGeographiesPlacesOperation
       RestApiId: !Ref ApiGatewayRestApi
       Integration:
         Type: AWS
-        IntegrationHttpMethod: !Ref ApiGatewayHTTPMethod
+        IntegrationHttpMethod: GET
         Uri: !Sub
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt ONSGeographiesLambdaFunction.Arn
@@ -258,13 +246,13 @@ Resources:
     Type: AWS::ApiGateway::Method
     Properties:
       ApiKeyRequired: false
-      HttpMethod: !Ref ApiGatewayHTTPMethod
+      HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointLatestCollections
       RestApiId: !Ref ApiGatewayRestApi
       Integration:
         Type: AWS
-        IntegrationHttpMethod: !Ref ApiGatewayHTTPMethod
+        IntegrationHttpMethod: GET
         Uri: !Sub
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
@@ -273,13 +261,13 @@ Resources:
     Type: AWS::ApiGateway::Method
     Properties:
       ApiKeyRequired: false
-      HttpMethod: !Ref ApiGatewayHTTPMethod
+      HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointLatestCollectionsCollection
       RestApiId: !Ref ApiGatewayRestApi
       Integration:
         Type: AWS
-        IntegrationHttpMethod: !Ref ApiGatewayHTTPMethod
+        IntegrationHttpMethod: GET
         Uri: !Sub
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
@@ -288,13 +276,13 @@ Resources:
     Type: AWS::ApiGateway::Method
     Properties:
       ApiKeyRequired: false
-      HttpMethod: !Ref ApiGatewayHTTPMethod
+      HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointFeaturesCollectionItems
       RestApiId: !Ref ApiGatewayRestApi
       Integration:
         Type: AWS
-        IntegrationHttpMethod: !Ref ApiGatewayHTTPMethod
+        IntegrationHttpMethod: GET
         Uri: !Sub
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
@@ -303,13 +291,13 @@ Resources:
     Type: AWS::ApiGateway::Method
     Properties:
       ApiKeyRequired: false
-      HttpMethod: !Ref ApiGatewayHTTPMethod
+      HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointFeaturesCollectionItemsFunction
       RestApiId: !Ref ApiGatewayRestApi
       Integration:
         Type: AWS
-        IntegrationHttpMethod: !Ref ApiGatewayHTTPMethod
+        IntegrationHttpMethod: GET
         Uri: !Sub
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
