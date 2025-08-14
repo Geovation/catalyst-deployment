@@ -97,6 +97,14 @@ Resources:
       Code:
         ZipFile: "https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/release.zip"
 
+  NGDWrapperApiGatewayInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt NGDWrapperLambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${apiGateway}/<APIGatewayStageName>/<apiGatewayHTTPMethod>/
+
   ONSGeographiesLambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -147,6 +155,14 @@ Resources:
       Timeout: 240
       Code:
         ZipFile: "https://raw.githubusercontent.com/geovation/catalyst-deployment/refs/heads/main/aws/sample.zip"
+
+  ONSGeographiesApiGatewayInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt ONSGeographiesLambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${apiGateway}/<APIGatewayStageName>/<apiGatewayHTTPMethod>/
 
   ApiGatewayRestApi:
     Type: AWS::ApiGateway::RestApi
