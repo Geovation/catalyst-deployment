@@ -218,11 +218,6 @@ Resources:
         S3Bucket: !Ref LambdaBucket
         S3Key: lambda.zip
 
-  # UpdateLambdaContents:
-  #   Type: AWSUtility::CloudFormation::CommandRunner
-  #   Properties:
-  #     Command:
-
   ONSGeographiesLambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -290,7 +285,7 @@ Resources:
     Properties:
       ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
       RestApiId: !Ref ApiGatewayRestApi
-      PathPart: 'catalyst'
+      PathPart: '/catalyst'
 
   EndpointONSGeographies:
     Type: AWS::ApiGateway::Resource
@@ -460,3 +455,11 @@ Resources:
       FunctionName: !GetAtt NGDWrapperLambdaFunction.Arn
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/prod/GET/
+
+
+Outputs:
+  apiGatewayInvokeURL:
+    Value: !Sub https://${apiGateway}.execute-api.${AWS::Region}.amazonaws.com/${apiGatewayStageName}
+
+  lambdaArn:
+    Value: !GetAtt lambdaFunction.Arn
