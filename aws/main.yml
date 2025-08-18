@@ -187,7 +187,8 @@ Resources:
             Statement:
               - Action: "lambda:InvokeFunction"
                 Effect: Allow
-                Resource: "*"
+                # This has been changed from '*'
+                Resource: !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${NGDWrapperLambdaFunctionName}"
         - PolicyName: CloudWatchLogsPolicy
           PolicyDocument:
             Version: "2012-10-17"
@@ -467,7 +468,7 @@ Resources:
       - MethodONSGeographies
     Properties:
       RestApiId: !Ref ApiGatewayRestApi
-      StageName: 'prod'
+      StageName: !Ref ApiGatewayStageName
       Description: 'CatalyST API Gateway Deployment'
 
 Outputs:
