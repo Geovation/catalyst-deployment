@@ -66,13 +66,14 @@ Resources:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: S3WritePolicy
+        - PolicyName: S3WriteDeletePolicy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
                   - s3:PutObject
+                  - s3:DeleteObject
                 Resource: !Sub "${LambdaBucket.Arn}/*"
         - PolicyName: CloudWatchLogsPolicy
           PolicyDocument:
@@ -137,18 +138,27 @@ Resources:
               logger.info(f"Received event: {json.dumps(event)}")
 
               try:
+                  s3 = boto3.client('s3')
+                  bucket = event['ResourceProperties']['BucketName']
+                  key = event['ResourceProperties'].get('KeyName', 'lambda.zip')
+                  delete_object = event['ResourceProperties'].get('DeleteObject', False)
+
                   if event['RequestType'] in ['Create', 'Update']:
-                      response = urllib.request.urlopen(url)
-                      zip_data = response.read()
-
-                      s3 = boto3.client('s3')
-                      s3.put_object(
-                          Bucket=event['ResourceProperties']['BucketName'],
-                          Key=event['ResourceProperties'].get('KeyName', 'lambda.zip'),
-                          Body=zip_data
-                      )
-
-                  # For Delete requests, you can optionally clean up resources
+                      if delete_object:
+                          logger.info("Delete request received, removing S3 object.")
+                          s3.delete_object(
+                              Bucket=bucket,
+                              Key=key
+                          )
+                      else:
+                          logger.info("Downloading and uploading the zip file to S3.")
+                          response = urllib.request.urlopen(url)
+                          zip_data = response.read()
+                          s3.put_object(
+                              Bucket=bucket,
+                              Key=key,
+                              Body=zip_data
+                          )
                   send_response(event, context, "SUCCESS")
 
               except Exception as e:
@@ -266,11 +276,22 @@ Resources:
           def lambda_handler(event, context):
               return {
                   'statusCode': 200,
-                  'body': json.dumps({'message': 'Placeholder: Hello from ONS Geographies Lambda!'}  )
+                  'body': json.dumps({'message': 'Placeholder: Hello from ONS Geographies Lambda!'})
               }
-        
-        
-  
+
+  # === Cleanup: Delete Bootstrap Lambda and S3 Bucket ===
+
+  CleanupBootstrapLambda:
+    Type: Custom::InitFunction
+    DependsOn:
+      - NGDWrapperLambdaFunction
+      - ONSGeographiesLambdaFunction
+    Properties:
+      ServiceToken: !GetAtt InitFunction.Arn
+      BucketName: !Ref LambdaBucket
+      KeyName: lambda.zip
+      DeleteObject: true
+
   # === Lambda Permissions for API Gateway ===
   
   NGDWrapperApiGatewayInvokeLatest:
