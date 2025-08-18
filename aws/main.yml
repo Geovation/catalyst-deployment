@@ -109,7 +109,8 @@ Resources:
           logger = logging.getLogger()
           logger.setLevel(logging.INFO)
 
-          url = "https://github.com/Geovation/catalyst-ngd-wrappers-aws/releases/latest/download/release.zip"
+          ngd_wrappers_url = "https://github.com/Geovation/catalyst-ngd-wrappers-aws/releases/latest/download/aws_lambda_release.zip"
+          ons_geographies_url = "https://github.com/Geovation/catalyst-ons-geographies-aws/releases/latest/download/aws_lambda_release.zip"
 
           def send_response(event, context, status, reason=None):
               response_body = {
@@ -157,6 +158,7 @@ Resources:
                               Bucket=bucket,
                               Key=ngd_key
                           )
+                          logger.info(f"Deleted {ngd_key} from bucket {bucket}.")
                           s3.delete_object(
                               Bucket=bucket,
                               Key=ons_key
@@ -165,14 +167,17 @@ Resources:
                           s3.delete_bucket(Bucket=bucket)
                       else:
                           logger.info("Downloading and uploading the zip file to S3.")
-                          response = urllib.request.urlopen(url)
+                          response = urllib.request.urlopen(ngd_wrappers_url)
                           zip_data = response.read()
                           s3.put_object(
                               Bucket=bucket,
                               Key=ngd_key,
                               Body=zip_data
                           )
+                          del response, zip_data  # Free memory
                           logger.info(f"Uploaded {ngd_key} to bucket {bucket}.")
+                          response = urllib.request.urlopen(ons_geographies_url)
+                          zip_data = response.read()
                           s3.put_object(
                               Bucket=bucket,
                               Key=ons_key,
