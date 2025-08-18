@@ -74,8 +74,11 @@ Resources:
                 Action:
                   - s3:PutObject
                   - s3:DeleteObject
-                  - s3:DeleteBucket
                 Resource: !Sub "${LambdaBucket.Arn}/*"
+              - Effect: Allow
+                Action:
+                  - s3:DeleteBucket
+                Resource: !Sub "${LambdaBucket.Arn}"
         - PolicyName: CloudWatchLogsPolicy
           PolicyDocument:
             Version: "2012-10-17"
