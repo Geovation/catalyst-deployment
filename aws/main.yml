@@ -3,7 +3,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >
   Catalyst tool deployment on AWS. Includes Lambda functions and an endpoints deployed through API Gateway.
 Parameters:
-  NGDWrapperLambdaFunctionName: # Name of the NGD Wrapper Lambda function
+  NGDWrapperLambdaFunctionName:
     Type: String
     MinLength: "1"
     MaxLength: "64"
@@ -204,7 +204,6 @@ Resources:
             Statement:
               - Action: "lambda:InvokeFunction"
                 Effect: Allow
-                # This has been changed from '*'
                 Resource: !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${NGDWrapperLambdaFunctionName}"
         - PolicyName: NGDWrapperCloudWatchPolicy
           PolicyDocument:
@@ -279,7 +278,6 @@ Resources:
       Role: !GetAtt ONSGeographiesLambdaRole.Arn
       Timeout: 240
       Code:
-        #"https://raw.githubusercontent.com/geovation/catalyst-deployment/refs/heads/main/aws/sample.zip"
         ZipFile: |
           def lambda_handler(event, context):
               return {
