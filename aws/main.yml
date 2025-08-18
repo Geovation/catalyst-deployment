@@ -89,6 +89,8 @@ Resources:
   InitFunction:
     Type: AWS::Lambda::Function
     Properties:
+      FunctionName: CatalystInitFunction
+      Description: Initializes an S3 bucket with the NGD Wrapper code, or cleans up (ie. deletes) if requested.
       Handler: index.handler
       Role: !GetAtt InitFunctionRole.Arn
       Runtime: python3.13
