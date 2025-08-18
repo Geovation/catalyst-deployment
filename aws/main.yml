@@ -261,7 +261,15 @@ Resources:
       Role: !GetAtt ONSGeographiesLambdaRole.Arn
       Timeout: 240
       Code:
-        ZipFile: "https://raw.githubusercontent.com/geovation/catalyst-deployment/refs/heads/main/aws/sample.zip"
+        #"https://raw.githubusercontent.com/geovation/catalyst-deployment/refs/heads/main/aws/sample.zip"
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps({'message': 'Placeholder: Hello from ONS Geographies Lambda!'}  )
+              }
+        
+        
   
   # === Lambda Permissions for API Gateway ===
   
