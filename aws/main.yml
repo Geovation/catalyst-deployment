@@ -1,16 +1,16 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
 Description: >
-  CatalyST tool deployment on AWS. Includes two Lambda functions, one for NGD Wrapper and one for the ONS Geographies proxy
+  Catalyst tool deployment on AWS. Includes Lambda functions and an endpoints deployed through API Gateway.
 Parameters:
-  NGDWrapperLambdaFunctionName:
+  NGDWrapperLambdaFunctionName: # Name of the NGD Wrapper Lambda function
     Type: String
     MinLength: "1"
     MaxLength: "64"
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
     Description: The name of the NGD Wrapper Lambda function
     Default: Lambda-NGDWrapper
-  NGDWrapperLambdaRoleName:
+  NGDWrapperLambdaRoleName: 
     Type: String
     MinLength: "1"
     MaxLength: "64"
@@ -43,188 +43,485 @@ Parameters:
     MaxLength: "128"
     AllowedPattern: '[\w+=,.@-]+'
     Default: Lambda-ONSGeographies-Policy
+  ApiGatewayStageName:
+    Type: String
+    Default: prod
+    Description: The stage name for the API Gateway deployment
 
 Resources:
-  NGDWrapperLambdaRole:
+
+  # === S3 Bucket Population ===
+
+  LambdaBucket:
+    Type: AWS::S3::Bucket
+
+  InitFunctionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Ref NGDWrapperLambdaRoleName
-      Description: An execution role for the NGD Wrapper Lambda function
-      ManagedPolicyArns:
-        - !Ref NGDWrapperLambdaPolicy
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
               Service: lambda.amazonaws.com
-            Action:
-              - "sts:AssumeRole"
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: S3WriteDeletePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub "${LambdaBucket.Arn}/*"
+              - Effect: Allow
+                Action:
+                  - s3:DeleteBucket
+                Resource: !Sub "${LambdaBucket.Arn}"
+        - PolicyName: CloudWatchLogsPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
 
-  NGDWrapperLambdaPolicy:
-    Type: AWS::IAM::ManagedPolicy
+  InitFunction:
+    Type: AWS::Lambda::Function
     Properties:
-      ManagedPolicyName: !Ref NGDWrapperLambdaPolicyName
-      Description: Managed policy for a Lambda function launched by CloudFormation
-      PolicyDocument:
+      FunctionName: CatalystInitFunction
+      Description: Initializes an S3 bucket with the NGD Wrapper code, or cleans up (ie. deletes) if requested.
+      Handler: index.handler
+      Role: !GetAtt InitFunctionRole.Arn
+      Runtime: python3.13
+      Timeout: 180
+      Code:
+        ZipFile: |
+          import json
+          import urllib.request
+          import boto3
+          import logging
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          url = "https://github.com/Geovation/catalyst-ngd-wrappers-aws/releases/latest/download/release.zip"
+
+          def send_response(event, context, status, reason=None):
+              response_body = {
+                  'Status': status,
+                  'Reason': reason or 'See the details in CloudWatch Log Stream: ' + context.log_stream_name,
+                  'PhysicalResourceId': context.log_stream_name,
+                  'StackId': event['StackId'],
+                  'RequestId': event['RequestId'],
+                  'LogicalResourceId': event['LogicalResourceId'],
+                  'Data': {}
+              }
+
+              response_url = event['ResponseURL']
+              json_response_body = json.dumps(response_body).encode('utf-8')
+
+              try:
+                  req = urllib.request.Request(
+                      url=response_url,
+                      data=json_response_body,
+                      method='PUT',
+                      headers={
+                          'Content-Type': '',
+                          'Content-Length': str(len(json_response_body))
+                      }
+                  )
+                  with urllib.request.urlopen(req) as response:
+                      logger.info(f"CloudFormation response status: {response.status}")
+              except Exception as e:
+                  logger.error(f"Failed to send response: {str(e)}")
+
+          def handler(event, context):
+              logger.info(f"Received event: {json.dumps(event)}")
+
+              try:
+                  s3 = boto3.client('s3')
+                  bucket = event['ResourceProperties']['BucketName']
+                  key = event['ResourceProperties'].get('KeyName', 'lambda.zip')
+                  cleanup = event['ResourceProperties'].get('Cleanup', False)
+
+                  if event['RequestType'] in ['Create', 'Update']:
+                      if cleanup:
+                          logger.info("Delete request received, removing S3 object.")
+                          s3.delete_object(
+                              Bucket=bucket,
+                              Key=key
+                          )
+                          logger.info("Deleting bucket.")
+                          s3.delete_bucket(Bucket=bucket)
+                      else:
+                          logger.info("Downloading and uploading the zip file to S3.")
+                          response = urllib.request.urlopen(url)
+                          zip_data = response.read()
+                          s3.put_object(
+                              Bucket=bucket,
+                              Key=key,
+                              Body=zip_data
+                          )
+                  send_response(event, context, "SUCCESS")
+
+              except Exception as e:
+                  logger.error(f"Error: {str(e)}")
+                  send_response(event, context, "FAILED", reason=str(e))
+
+  Initialize:
+    Type: Custom::InitFunction
+    DependsOn:
+      - LambdaBucket
+      - InitFunction
+    Properties:
+      ServiceToken: !GetAtt InitFunction.Arn
+      BucketName: !Ref LambdaBucket
+      KeyName: lambda.zip
+
+  # === Lambda Function ===
+
+  NGDWrapperLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref NGDWrapperLambdaRoleName
+      Description: An execution role for the NGD Wrapper Lambda function
+      AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
-            Action:
-              - "logs:CreateLogStream"
-              - "logs:PutLogEvents"
-            Resource:
-              !Join [
-                "",
-                [
-                  "arn:",
-                  !Ref AWS::Partition,
-                  ":logs:",
-                  !Ref AWS::Region,
-                  ":",
-                  !Ref AWS::AccountId,
-                  ":log-group:/aws/lambda/",
-                  !Ref NGDWrapperLambdaFunctionName,
-                  ":*",
-                ],
-              ]
-          - Effect: Allow
-            Action:
-              - "logs:CreateLogGroup"
-            Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
-
-  NGDWrapperLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Join ["", ["/aws/lambda/", !Ref NGDWrapperLambdaFunctionName]]
-      RetentionInDays: 30
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: NGDWrapperLambdaPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action: "lambda:InvokeFunction"
+                Effect: Allow
+                # This has been changed from '*'
+                Resource: !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${NGDWrapperLambdaFunctionName}"
+        - PolicyName: NGDWrapperCloudWatchPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
 
   NGDWrapperLambdaFunction:
     Type: AWS::Lambda::Function
+    DependsOn:
+      - Initialize
+      - NGDWrapperLambdaRole
     Properties:
       Description: Provides a wrapper for the NGD API
       FunctionName: !Ref NGDWrapperLambdaFunctionName
       Handler: lambda_function.lambda_handler
       MemorySize: 128
       Runtime: python3.13
-      Role: !GetAtt "NGDWrapperLambdaRole.Arn"
+      Role: !GetAtt NGDWrapperLambdaRole.Arn
       Timeout: 240
-      Environment:
-        Variables:
+      PackageType: Zip
       Code:
-        ZipFile: "https://raw.githubusercontent.com/geovation/catalyst-deployment/refs/heads/main/aws/sample.zip"
-
-  NGDWrapperLambdaUrl:
-    Type: AWS::Lambda::Url
-    Properties:
-      AuthType: NONE
-      TargetFunctionArn: !GetAtt "NGDWrapperLambdaFunction.Arn"
-      Cors:
-        AllowCredentials: false
-        AllowHeaders:
-          - "*"
-        AllowMethods:
-          - GET
-          - POST
-        AllowOrigins:
-          - "*"
-
-  NGDWrapperLambdaUrlPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunctionUrl
-      FunctionName: !Ref NGDWrapperLambdaFunctionName
-      Principal: "*"
-      FunctionUrlAuthType: NONE
+        S3Bucket: !Ref LambdaBucket
+        S3Key: lambda.zip
 
   ONSGeographiesLambdaRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: !Ref ONSGeographiesLambdaRoleName
       Description: An execution role for the ONS Geographies Proxy
-      ManagedPolicyArns:
-        - !Ref ONSGeographiesLambdaPolicy
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
               Service: lambda.amazonaws.com
-            Action:
-              - "sts:AssumeRole"
-
-  ONSGeographiesLambdaPolicy:
-    Type: AWS::IAM::ManagedPolicy
-    Properties:
-      ManagedPolicyName: !Ref ONSGeographiesLambdaPolicyName
-      Description: Managed policy for a Lambda function
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Action:
-              - "logs:CreateLogStream"
-              - "logs:PutLogEvents"
-            Resource:
-              !Join [
-                "",
-                [
-                  "arn:",
-                  !Ref AWS::Partition,
-                  ":logs:",
-                  !Ref AWS::Region,
-                  ":",
-                  !Ref AWS::AccountId,
-                  ":log-group:/aws/lambda/",
-                  !Ref ONSGeographiesLambdaFunctionName,
-                  ":*",
-                ],
-              ]
-          - Effect: Allow
-            Action:
-              - "logs:CreateLogGroup"
-            Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
-
-  ONSGeographiesLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Join ["", ["/aws/lambda/", !Ref ONSGeographiesLambdaFunctionName]]
-      RetentionInDays: 30
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: ONSGeographiesLambdaPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action: "lambda:InvokeFunction"
+                Effect: Allow
+                Resource: !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${ONSGeographiesLambdaFunctionName}"
+        - PolicyName: ONSGeographiesCloudWatchPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Effect: Allow
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
 
   ONSGeographiesLambdaFunction:
     Type: AWS::Lambda::Function
+    DependsOn:
+      - ONSGeographiesLambdaRole
     Properties:
       Description: Proxy for the ONS Geographies Proxy
       FunctionName: !Ref ONSGeographiesLambdaFunctionName
       Handler: lambda_function.lambda_handler
       MemorySize: 128
       Runtime: python3.13
-      Role: !GetAtt "LambdaRole.Arn"
+      Role: !GetAtt ONSGeographiesLambdaRole.Arn
       Timeout: 240
-      Environment:
-        Variables:
       Code:
-        ZipFile: "https://raw.githubusercontent.com/geovation/catalyst-deployment/refs/heads/main/aws/sample.zip"
+        #"https://raw.githubusercontent.com/geovation/catalyst-deployment/refs/heads/main/aws/sample.zip"
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps({'message': 'Placeholder: Hello from ONS Geographies Lambda!'})
+              }
 
-  ONSGeographiesLambdaUrl:
-    Type: AWS::Lambda::Url
+  # === Cleanup: Delete Bootstrap Lambda and S3 Bucket ===
+
+  CleanupBootstrapLambda:
+    Type: Custom::InitFunction
+    DependsOn:
+      - NGDWrapperLambdaFunction
+      - ONSGeographiesLambdaFunction
     Properties:
-      AuthType: NONE
-      TargetFunctionArn: !GetAtt "ONSGeographiesLambdaFunction.Arn"
-      Cors:
-        AllowCredentials: false
-        AllowHeaders:
-          - "*"
-        AllowMethods:
-          - GET
-          - POST
-        AllowOrigins:
-          - "*"
+      ServiceToken: !GetAtt InitFunction.Arn
+      BucketName: !Ref LambdaBucket
+      KeyName: lambda.zip
+      Cleanup: true
 
-  ONSGeographiesLambdaUrlPermission:
+  # === Lambda Permissions for API Gateway ===
+  
+  NGDWrapperApiGatewayInvokeLatest:
     Type: AWS::Lambda::Permission
     Properties:
-      Action: lambda:InvokeFunctionUrl
-      FunctionName: !Ref ONSGeographiesLambdaFunctionName
-      Principal: "*"
-      FunctionUrlAuthType: NONE
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt NGDWrapperLambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/latest-collections"
+
+  NGDWrapperApiGatewayInvokeLatestCollection:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt NGDWrapperLambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/latest-collections/*"
+
+  NGDWrapperApiGatewayInvokeFeatures:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt NGDWrapperLambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/features/*/*"
+
+  NGDWrapperApiGatewayInvokeFeaturesFunction:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt NGDWrapperLambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/features/*/*/*"
+
+  ONSGeographiesApiGatewayInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt ONSGeographiesLambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/ons-geographies/places/*"
+
+  # === API Gateway: API, Endpoints, Methods ===
+
+  ApiGatewayRestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: Catalyst
+      Description: API Gateway deployment for Geovation Catalyst tools. Deployed through CloudFormation.
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  EndpointBase:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: 'catalyst'
+
+  EndpointONSGeographies:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref EndpointBase
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: 'ons-geographies'
+
+  EndpointONSGeographiesPlaces:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref EndpointONSGeographies
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: 'places'
+
+  EndpointONSGeographiesPlacesOperation:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref EndpointONSGeographiesPlaces
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: '{operation}'
+
+  EndpointLatestCollections:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref EndpointBase
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: 'latest-collections'
+  
+  EndpointLatestCollectionsCollection:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref EndpointLatestCollections
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: '{collection}'
+
+  EndpointFeatures:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref EndpointBase
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: 'features'
+
+  EndpointFeaturesCollection:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref EndpointFeatures
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: '{collection}'
+
+  EndpointFeaturesCollectionItems:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref EndpointFeaturesCollection
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: 'items'
+
+  EndpointFeaturesCollectionItemsFunction:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref EndpointFeaturesCollectionItems
+      RestApiId: !Ref ApiGatewayRestApi
+      PathPart: '{function}'
+
+  MethodLatestCollections:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ResourceId: !Ref EndpointLatestCollections
+      RestApiId: !Ref ApiGatewayRestApi
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
+
+  MethodLatestCollectionsCollection:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ResourceId: !Ref EndpointLatestCollectionsCollection
+      RestApiId: !Ref ApiGatewayRestApi
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
+
+  MethodItems:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ResourceId: !Ref EndpointFeaturesCollectionItems
+      RestApiId: !Ref ApiGatewayRestApi
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
+
+  MethodItemsFunction:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ResourceId: !Ref EndpointFeaturesCollectionItemsFunction
+      RestApiId: !Ref ApiGatewayRestApi
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
+
+  MethodONSGeographies:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ResourceId: !Ref EndpointONSGeographiesPlacesOperation
+      RestApiId: !Ref ApiGatewayRestApi
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt ONSGeographiesLambdaFunction.Arn
+
+  # === API Gateway Deployment ===
+
+  ApiGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - MethodLatestCollections
+      - MethodLatestCollectionsCollection
+      - MethodItems
+      - MethodItemsFunction
+      - MethodONSGeographies
+    Properties:
+      RestApiId: !Ref ApiGatewayRestApi
+      StageName: !Ref ApiGatewayStageName
+      Description: 'CatalyST API Gateway Deployment'
+
+Outputs:
+  apiGatewayInvokeURL:
+    Value: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiGatewayStageName}/catalyst
+    Description: The URL to invoke the API Gateway endpoint
+
+  NGDWrapperLambdaFunctionArn:
+    Value: !GetAtt NGDWrapperLambdaFunction.Arn
+    Description: The ARN of the Lambda function
+  
+  ONSGeographiesLambdaFunctionArn:
+    Value: !GetAtt ONSGeographiesLambdaFunction.Arn
+    Description: The ARN of the ONS Geographies Lambda function
