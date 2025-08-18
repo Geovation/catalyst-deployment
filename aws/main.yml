@@ -141,15 +141,17 @@ Resources:
                   s3 = boto3.client('s3')
                   bucket = event['ResourceProperties']['BucketName']
                   key = event['ResourceProperties'].get('KeyName', 'lambda.zip')
-                  delete_object = event['ResourceProperties'].get('DeleteObject', False)
+                  cleanup = event['ResourceProperties'].get('Cleanup', False)
 
                   if event['RequestType'] in ['Create', 'Update']:
-                      if delete_object:
+                      if cleanup:
                           logger.info("Delete request received, removing S3 object.")
                           s3.delete_object(
                               Bucket=bucket,
                               Key=key
                           )
+                          logger.info("Deleting bucket.")
+                          s3.delete_bucket(Bucket=bucket)
                       else:
                           logger.info("Downloading and uploading the zip file to S3.")
                           response = urllib.request.urlopen(url)
@@ -290,7 +292,7 @@ Resources:
       ServiceToken: !GetAtt InitFunction.Arn
       BucketName: !Ref LambdaBucket
       KeyName: lambda.zip
-      DeleteObject: true
+      Cleanup: true
 
   # === Lambda Permissions for API Gateway ===
   
