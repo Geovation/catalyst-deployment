@@ -178,8 +178,7 @@ Resources:
           - Effect: Allow
             Principal:
               Service: lambda.amazonaws.com
-            Action:
-              - "sts:AssumeRole"
+            Action: "sts:AssumeRole"
       Policies:
         - PolicyName: NGDWrapperLambdaPolicy
           PolicyDocument:
@@ -189,7 +188,7 @@ Resources:
                 Effect: Allow
                 # This has been changed from '*'
                 Resource: !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${NGDWrapperLambdaFunctionName}"
-        - PolicyName: CloudWatchLogsPolicy
+        - PolicyName: NGDWrapperCloudWatchPolicy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -229,10 +228,17 @@ Resources:
           - Effect: Allow
             Principal:
               Service: lambda.amazonaws.com
-            Action:
-              - "sts:AssumeRole"
+            Action: "sts:AssumeRole"
       Policies:
-        - PolicyDocument:
+        - PolicyName: ONSGeographiesLambdaPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action: "lambda:InvokeFunction"
+                Effect: Allow
+                Resource: !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${ONSGeographiesLambdaFunctionName}"
+        - PolicyName: ONSGeographiesCloudWatchPolicy
+          PolicyDocument:
             Version: 2012-10-17
             Statement:
               - Action:
@@ -240,8 +246,7 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Effect: Allow
-                Resource: "*"
-          PolicyName: lambda
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
 
   ONSGeographiesLambdaFunction:
     Type: AWS::Lambda::Function
