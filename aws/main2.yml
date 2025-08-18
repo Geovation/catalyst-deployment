@@ -320,23 +320,46 @@ Resources:
         Types:
           - REGIONAL
 
-  ONSGeographiesApiGatewayInvoke:
+  # Fix 3: Update Lambda permissions with specific resource paths
+  NGDWrapperApiGatewayInvokeLatest:
     Type: AWS::Lambda::Permission
-    DependsOn: ONSGeographiesLambdaFunction
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !GetAtt ONSGeographiesLambdaFunction.Arn
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/*
-
-  NGDWrapperApiGatewayInvoke:
-    Type: AWS::Lambda::Permission
-    DependsOn: NGDWrapperLambdaFunction
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt NGDWrapperLambdaFunction.Arn
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/*/GET/catalyst/latest-collections
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/latest-collections"
+
+  NGDWrapperApiGatewayInvokeLatestCollection:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt NGDWrapperLambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/latest-collections/*"
+
+  NGDWrapperApiGatewayInvokeFeatures:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt NGDWrapperLambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/features/*/*"
+
+  NGDWrapperApiGatewayInvokeFeaturesFunction:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt NGDWrapperLambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/features/*/*/*"
+
+  ONSGeographiesApiGatewayInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt ONSGeographiesLambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/ons-geographies/places/*"
 
   EndpointBase:
     Type: AWS::ApiGateway::Resource
@@ -408,29 +431,9 @@ Resources:
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: '{function}'
 
-  MethodONSGeographies:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      ApiKeyRequired: false
-      HttpMethod: GET
-      AuthorizationType: NONE
-      ResourceId: !Ref EndpointONSGeographiesPlacesOperation
-      RestApiId: !Ref ApiGatewayRestApi
-      RequestParameters:
-        method.request.path.operation: true
-      Integration:
-        Type: AWS_PROXY
-        IntegrationHttpMethod: GET
-        Uri: !Sub
-          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
-          - lambdaArn: !GetAtt ONSGeographiesLambdaFunction.Arn
-  
+  # Fix 2: Update API Gateway method integrations
   MethodLatestCollections:
     Type: AWS::ApiGateway::Method
-    DependsOn:
-      - NGDWrapperLambdaFunction
-      - NGDWrapperApiGatewayInvoke
-      - ApiGatewayRestApi
     Properties:
       ApiKeyRequired: false
       HttpMethod: GET
@@ -438,8 +441,8 @@ Resources:
       ResourceId: !Ref EndpointLatestCollections
       RestApiId: !Ref ApiGatewayRestApi
       Integration:
-        Type: AWS_PROXY
-        IntegrationHttpMethod: GET
+        Type: AWS_PROXY  # Changed from AWS
+        IntegrationHttpMethod: POST  # Must be POST for Lambda
         Uri: !Sub
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
@@ -452,15 +455,13 @@ Resources:
       AuthorizationType: NONE
       ResourceId: !Ref EndpointLatestCollectionsCollection
       RestApiId: !Ref ApiGatewayRestApi
-      RequestParameters:
-        method.request.path.collection: true
       Integration:
         Type: AWS_PROXY
-        IntegrationHttpMethod: GET
+        IntegrationHttpMethod: POST
         Uri: !Sub
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
-  
+
   MethodItems:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -469,11 +470,9 @@ Resources:
       AuthorizationType: NONE
       ResourceId: !Ref EndpointFeaturesCollectionItems
       RestApiId: !Ref ApiGatewayRestApi
-      RequestParameters:
-        method.request.path.collection: true
       Integration:
         Type: AWS_PROXY
-        IntegrationHttpMethod: GET
+        IntegrationHttpMethod: POST
         Uri: !Sub
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
@@ -486,15 +485,27 @@ Resources:
       AuthorizationType: NONE
       ResourceId: !Ref EndpointFeaturesCollectionItemsFunction
       RestApiId: !Ref ApiGatewayRestApi
-      RequestParameters:
-        method.request.path.collection: true
-        method.request.path.function: true
       Integration:
         Type: AWS_PROXY
-        IntegrationHttpMethod: GET
+        IntegrationHttpMethod: POST
         Uri: !Sub
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
+
+  MethodONSGeographies:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: false
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ResourceId: !Ref EndpointONSGeographiesPlacesOperation
+      RestApiId: !Ref ApiGatewayRestApi
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt ONSGeographiesLambdaFunction.Arn
 
   ApiGatewayDeployment:
     Type: AWS::ApiGateway::Deployment
