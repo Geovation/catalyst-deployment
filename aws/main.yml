@@ -54,6 +54,8 @@ Resources:
 
   LambdaBucket:
     Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "catalyst-temporary-bucket"
 
   InitFunctionRole:
     Type: AWS::IAM::Role
@@ -250,7 +252,7 @@ Resources:
       PackageType: Zip
       Code:
         S3Bucket: !Ref LambdaBucket
-        S3Key: lambda.zip
+        S3Key: ngd_wrappers_lambda.zip
 
   ONSGeographiesLambdaRole:
     Type: AWS::IAM::Role
@@ -286,6 +288,7 @@ Resources:
   ONSGeographiesLambdaFunction:
     Type: AWS::Lambda::Function
     DependsOn:
+      - Initialize
       - ONSGeographiesLambdaRole
     Properties:
       Description: Proxy for the ONS Geographies Proxy
@@ -296,12 +299,8 @@ Resources:
       Role: !GetAtt ONSGeographiesLambdaRole.Arn
       Timeout: 240
       Code:
-        ZipFile: |
-          def lambda_handler(event, context):
-              return {
-                  'statusCode': 200,
-                  'body': json.dumps({'message': 'Placeholder: Hello from ONS Geographies Lambda!'})
-              }
+        S3Bucket: !Ref LambdaBucket
+        S3Key: ons_geographies_lambda.zip
 
   # === Cleanup: Delete Bootstrap Lambda and S3 Bucket ===
 
@@ -313,7 +312,8 @@ Resources:
     Properties:
       ServiceToken: !GetAtt InitFunction.Arn
       BucketName: !Ref LambdaBucket
-      KeyName: lambda.zip
+      NGDKeyName: ngd_wrappers_lambda.zip
+      ONSKeyName: ons_geographies_lambda.zip
       Cleanup: true
 
   # === Lambda Permissions for API Gateway ===
