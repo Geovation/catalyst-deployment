@@ -50,7 +50,7 @@ Parameters:
 
 Resources:
 
-# === S3 Bucket Creation and Population ===
+  # === S3 Bucket Population ===
 
   LambdaBucket:
     Type: AWS::S3::Bucket
@@ -165,15 +165,13 @@ Resources:
       BucketName: !Ref LambdaBucket
       KeyName: lambda.zip
 
-# === Lambda Function ===
+  # === Lambda Function ===
 
   NGDWrapperLambdaRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: !Ref NGDWrapperLambdaRoleName
       Description: An execution role for the NGD Wrapper Lambda function
-      # ManagedPolicyArns:
-      #   - !Ref NGDWrapperLambdaPolicy
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -201,32 +199,11 @@ Resources:
                   - logs:PutLogEvents
                 Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
 
-  # NGDWrapperLambdaPolicy:
-  #   Type: AWS::IAM::ManagedPolicy
-  #   Properties:
-  #     ManagedPolicyName: !Ref NGDWrapperLambdaPolicyName
-  #     Description: Managed policy for a Lambda function launched by CloudFormation
-  #     PolicyDocument:
-  #       Version: "2012-10-17"
-  #       Statement:
-  #         - Effect: Allow
-  #           Action:
-  #             - "logs:CreateLogGroup"
-  #             - "logs:CreateLogStream"
-  #             - "logs:PutLogEvents"
-  #           Resource:
-  #             !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*:*"
-  #         - Effect: Allow
-  #           Action:
-  #             - "logs:CreateLogGroup"
-  #           Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
-
   NGDWrapperLambdaFunction:
     Type: AWS::Lambda::Function
     DependsOn:
       - Initialize
       - NGDWrapperLambdaRole
-      #- NGDWrapperLambdaPolicy
     Properties:
       Description: Provides a wrapper for the NGD API
       FunctionName: !Ref NGDWrapperLambdaFunctionName
@@ -239,21 +216,12 @@ Resources:
       Code:
         S3Bucket: !Ref LambdaBucket
         S3Key: lambda.zip
-    
-  # LambdaLogGroup:
-  #   DependsOn: NGDWrapperLambdaFunction
-  #   Type: AWS::Logs::LogGroup
-  #   Properties:
-  #     LogGroupName: !Sub "/aws/lambda/${NGDWrapperLambdaFunctionName}1"
-  #     RetentionInDays: 30
 
   ONSGeographiesLambdaRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: !Ref ONSGeographiesLambdaRoleName
       Description: An execution role for the ONS Geographies Proxy
-      #ManagedPolicyArns:
-        #- !Ref ONSGeographiesLambdaPolicy
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -274,30 +242,10 @@ Resources:
                 Resource: "*"
           PolicyName: lambda
 
-  # ONSGeographiesLambdaPolicy:
-  #   Type: AWS::IAM::ManagedPolicy
-  #   Properties:
-  #     ManagedPolicyName: !Ref ONSGeographiesLambdaPolicyName
-  #     Description: Managed policy for a Lambda function
-  #     PolicyDocument:
-  #       Version: "2012-10-17"
-  #       Statement:
-  #         - Effect: Allow
-  #           Action:
-  #             - "logs:CreateLogStream"
-  #             - "logs:PutLogEvents"
-  #           Resource:
-  #             !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*:*"
-  #         - Effect: Allow
-  #           Action:
-  #             - "logs:CreateLogGroup"
-  #           Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
-
   ONSGeographiesLambdaFunction:
     Type: AWS::Lambda::Function
     DependsOn:
       - ONSGeographiesLambdaRole
-      #- ONSGeographiesLambdaPolicy
     Properties:
       Description: Proxy for the ONS Geographies Proxy
       FunctionName: !Ref ONSGeographiesLambdaFunctionName
@@ -308,19 +256,9 @@ Resources:
       Timeout: 240
       Code:
         ZipFile: "https://raw.githubusercontent.com/geovation/catalyst-deployment/refs/heads/main/aws/sample.zip"
-
-# === API Gateway ===
-
-  ApiGatewayRestApi:
-    Type: AWS::ApiGateway::RestApi
-    Properties:
-      Name: Catalyst
-      Description: API Gateway deployment for Geovation Catalyst tools. Deployed through CloudFormation.
-      EndpointConfiguration:
-        Types:
-          - REGIONAL
-
-  # Fix 3: Update Lambda permissions with specific resource paths
+  
+  # === Lambda Permissions for API Gateway ===
+  
   NGDWrapperApiGatewayInvokeLatest:
     Type: AWS::Lambda::Permission
     Properties:
@@ -360,6 +298,17 @@ Resources:
       FunctionName: !GetAtt ONSGeographiesLambdaFunction.Arn
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/ons-geographies/places/*"
+
+  # === API Gateway: API, Endpoints, Methods ===
+
+  ApiGatewayRestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: Catalyst
+      Description: API Gateway deployment for Geovation Catalyst tools. Deployed through CloudFormation.
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
 
   EndpointBase:
     Type: AWS::ApiGateway::Resource
@@ -431,7 +380,6 @@ Resources:
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: '{function}'
 
-  # Fix 2: Update API Gateway method integrations
   MethodLatestCollections:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -441,8 +389,8 @@ Resources:
       ResourceId: !Ref EndpointLatestCollections
       RestApiId: !Ref ApiGatewayRestApi
       Integration:
-        Type: AWS_PROXY  # Changed from AWS
-        IntegrationHttpMethod: POST  # Must be POST for Lambda
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
         Uri: !Sub
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
@@ -506,6 +454,8 @@ Resources:
         Uri: !Sub
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt ONSGeographiesLambdaFunction.Arn
+
+  # === API Gateway Deployment ===
 
   ApiGatewayDeployment:
     Type: AWS::ApiGateway::Deployment
