@@ -146,15 +146,20 @@ Resources:
               try:
                   s3 = boto3.client('s3')
                   bucket = event['ResourceProperties']['BucketName']
-                  key = event['ResourceProperties'].get('KeyName', 'lambda.zip')
+                  ngd_key = event['ResourceProperties'].get('NGDKeyName', 'ngd_wrappers_lambda.zip')
+                  ons_key = event['ResourceProperties'].get('ONSKeyName', 'ons_geographies_lambda.zip')
                   cleanup = event['ResourceProperties'].get('Cleanup', False)
 
                   if event['RequestType'] in ['Create', 'Update']:
                       if cleanup:
-                          logger.info("Delete request received, removing S3 object.")
+                          logger.info("Delete request received, removing S3 objects.")
                           s3.delete_object(
                               Bucket=bucket,
-                              Key=key
+                              Key=ngd_key
+                          )
+                          s3.delete_object(
+                              Bucket=bucket,
+                              Key=ons_key
                           )
                           logger.info("Deleting bucket.")
                           s3.delete_bucket(Bucket=bucket)
@@ -164,9 +169,16 @@ Resources:
                           zip_data = response.read()
                           s3.put_object(
                               Bucket=bucket,
-                              Key=key,
+                              Key=ngd_key,
                               Body=zip_data
                           )
+                          logger.info(f"Uploaded {ngd_key} to bucket {bucket}.")
+                          s3.put_object(
+                              Bucket=bucket,
+                              Key=ons_key,
+                              Body=zip_data
+                          )
+                          logger.info(f"Uploaded {ons_key} to bucket {bucket}.")
                   send_response(event, context, "SUCCESS")
 
               except Exception as e:
@@ -181,7 +193,8 @@ Resources:
     Properties:
       ServiceToken: !GetAtt InitFunction.Arn
       BucketName: !Ref LambdaBucket
-      KeyName: lambda.zip
+      NGDKeyName: ngd_wrappers_lambda.zip
+      ONSKeyName: ons_geographies_lambda.zip
 
   # === Lambda Function ===
 
