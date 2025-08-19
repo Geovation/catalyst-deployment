@@ -3,6 +3,18 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >
   Catalyst tool deployment on AWS. Includes Lambda functions and an endpoints deployed through API Gateway.
 Parameters:
+  OSDataHubProjectKey:
+    Type: String
+    MinLength: "32"
+    MaxLength: "32"
+    AllowedPattern: "[a-zA-Z0-9]*"
+    Description: The Client ID for the OS Data Hub
+  OSDataHubProjectSecret:
+    Type: String
+    MinLength: "16"
+    MaxLength: "16"
+    AllowedPattern: "[a-zA-Z0-9]*"
+    Description: The Client Secret for the OS Data Hub
   NGDWrapperLambdaFunctionName:
     Type: String
     MinLength: "1"
@@ -250,6 +262,10 @@ Resources:
       Role: !GetAtt NGDWrapperLambdaRole.Arn
       Timeout: 240
       PackageType: Zip
+      Environment:
+        Variables:
+          CLIENT_ID: !Ref OSDataHubProjectKey
+          CLIENT_SECRET: !Ref OSDataHubProjectSecret
       Code:
         S3Bucket: !Ref LambdaBucket
         S3Key: ngd_wrappers_lambda.zip
