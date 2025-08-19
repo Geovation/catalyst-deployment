@@ -96,7 +96,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: CatalystInitFunction
-      Description: Initializes an S3 bucket with the NGD Wrapper code, or cleans up (ie. deletes) if requested.
+      Description: Populates S3 bucket with the NGD Wrapper code, or cleans up (ie. deletes) if requested.
       Handler: index.handler
       Role: !GetAtt InitFunctionRole.Arn
       Runtime: python3.13
@@ -376,76 +376,76 @@ Resources:
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: 'catalyst'
 
-  EndpointONSGeographies:
+  EndpointONS:
     Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !Ref EndpointBase
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: 'ons-geographies'
 
-  EndpointONSGeographiesPlaces:
+  EndpointONSPlaces:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !Ref EndpointONSGeographies
+      ParentId: !Ref EndpointONS
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: 'places'
 
-  EndpointONSGeographiesPlacesOperation:
+  EndpointONSPlacesOperation:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !Ref EndpointONSGeographiesPlaces
+      ParentId: !Ref EndpointONSPlaces
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: '{operation}'
 
-  EndpointLatestCollections:
+  EndpointNGDLatestCollections:
     Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !Ref EndpointBase
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: 'latest-collections'
   
-  EndpointLatestCollectionsCollection:
+  EndpointNGDLatestCollectionsCollection:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !Ref EndpointLatestCollections
+      ParentId: !Ref EndpointNGDLatestCollections
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: '{collection}'
 
-  EndpointFeatures:
+  EndpointNGDFeatures:
     Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !Ref EndpointBase
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: 'features'
 
-  EndpointFeaturesCollection:
+  EndpointNGDFeaturesCollection:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !Ref EndpointFeatures
+      ParentId: !Ref EndpointNGDFeatures
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: '{collection}'
 
-  EndpointFeaturesCollectionItems:
+  EndpointNGDFeaturesCollectionItems:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !Ref EndpointFeaturesCollection
+      ParentId: !Ref EndpointNGDFeaturesCollection
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: 'items'
 
-  EndpointFeaturesCollectionItemsFunction:
+  EndpointNGDFeaturesCollectionItemsFunction:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !Ref EndpointFeaturesCollectionItems
+      ParentId: !Ref EndpointNGDFeaturesCollectionItems
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: '{function}'
 
-  MethodLatestCollections:
+  MethodNGDLatestCollections:
     Type: AWS::ApiGateway::Method
     Properties:
       ApiKeyRequired: false
       HttpMethod: GET
       AuthorizationType: NONE
-      ResourceId: !Ref EndpointLatestCollections
+      ResourceId: !Ref EndpointNGDLatestCollections
       RestApiId: !Ref ApiGatewayRestApi
       Integration:
         Type: AWS_PROXY
@@ -454,13 +454,13 @@ Resources:
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
 
-  MethodLatestCollectionsCollection:
+  MethodNGDLatestCollectionsCollection:
     Type: AWS::ApiGateway::Method
     Properties:
       ApiKeyRequired: false
       HttpMethod: GET
       AuthorizationType: NONE
-      ResourceId: !Ref EndpointLatestCollectionsCollection
+      ResourceId: !Ref EndpointNGDLatestCollectionsCollection
       RestApiId: !Ref ApiGatewayRestApi
       Integration:
         Type: AWS_PROXY
@@ -469,13 +469,13 @@ Resources:
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
 
-  MethodItems:
+  MethodNGDItems:
     Type: AWS::ApiGateway::Method
     Properties:
       ApiKeyRequired: false
       HttpMethod: GET
       AuthorizationType: NONE
-      ResourceId: !Ref EndpointFeaturesCollectionItems
+      ResourceId: !Ref EndpointNGDFeaturesCollectionItems
       RestApiId: !Ref ApiGatewayRestApi
       Integration:
         Type: AWS_PROXY
@@ -484,13 +484,13 @@ Resources:
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
 
-  MethodItemsFunction:
+  MethodNGDItemsFunction:
     Type: AWS::ApiGateway::Method
     Properties:
       ApiKeyRequired: false
       HttpMethod: GET
       AuthorizationType: NONE
-      ResourceId: !Ref EndpointFeaturesCollectionItemsFunction
+      ResourceId: !Ref EndpointNGDFeaturesCollectionItemsFunction
       RestApiId: !Ref ApiGatewayRestApi
       Integration:
         Type: AWS_PROXY
@@ -499,13 +499,13 @@ Resources:
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
 
-  MethodONSGeographies:
+  MethodONS:
     Type: AWS::ApiGateway::Method
     Properties:
       ApiKeyRequired: false
       HttpMethod: GET
       AuthorizationType: NONE
-      ResourceId: !Ref EndpointONSGeographiesPlacesOperation
+      ResourceId: !Ref EndpointONSPlacesOperation
       RestApiId: !Ref ApiGatewayRestApi
       Integration:
         Type: AWS_PROXY
