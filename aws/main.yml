@@ -5,13 +5,13 @@ Description: >
 Parameters:
   OSDataHubProjectKey:
     Type: String
-    MinLength: "32"
+    MinLength: "0"
     MaxLength: "32"
     AllowedPattern: "[a-zA-Z0-9]*"
     Description: Your Project API Key from the OS Data Hub
   OSDataHubProjectSecret:
     Type: String
-    MinLength: "16"
+    MinLength: "0"
     MaxLength: "16"
     AllowedPattern: "[a-zA-Z0-9]*"
     Description: The Project API Secret from the OS Data Hub
@@ -535,11 +535,11 @@ Resources:
   ApiGatewayDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn:
-      - MethodLatestCollections
-      - MethodLatestCollectionsCollection
-      - MethodItems
-      - MethodItemsFunction
-      - MethodONSGeographies
+      - MethodNGDLatestCollections
+      - MethodNGDLatestCollectionsCollection
+      - MethodNGDItems
+      - MethodNGDItemsFunction
+      - MethodONS
     Properties:
       RestApiId: !Ref ApiGatewayRestApi
       StageName: !Ref ApiGatewayStageName
@@ -547,7 +547,7 @@ Resources:
 
 Outputs:
   apiGatewayInvokeURL:
-    Value: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiGatewayStageName}/catalyst
+    Value: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiGatewayStageName}/
     Description: The URL to invoke the API Gateway endpoint
 
   NGDWrapperLambdaFunctionArn:
