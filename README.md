@@ -55,6 +55,10 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
 
 ### Resources Overview
 
+Running the main.yaml file automatically generates all the required resources. These resources are summarised below.
+Note that an S3 Bucket is used as a temporary code store before is is loaded into lambda functions. This bucket is deleted after use.
+The two temporary resources list are not used by the final product, but only required for the initial import of the code.
+
 | Resource                     | Resource Name in `main.yml`         | Resource Type       | Notes                                                                 | Other Associated Resources                                           |
 |-----------------------------|-------------------------------------|---------------------|-----------------------------------------------------------------------|----------------------------------------------------------------------|
 | Temporary S3 Bucket         | `LambdaBucket`                      | S3 Bucket           | Intermediary storage location for code between GitHub and Lambda. **DELETED** by CloudFormation after use.     |                                                                      |
