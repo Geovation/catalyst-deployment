@@ -10,7 +10,7 @@ param location string = 'UK West'
 param onsGeographiesName string = 'ons-geographies'
 
 @description('Name of the NGD Wrapper Function resources')
-param ngdWrapperName string = 'ngd-wrapper-functions'
+param ngdWrapperName string = 'ngd-wrapper'
 
 // FOR LOGGING
 var logAnalyticsName = toLower('${workspaceName}-log-analytics')
@@ -21,14 +21,14 @@ var onsGeographiesFunctionName = '${onsGeographiesName}-function'
 var onsGeographiesStoreName = replace(toLower('${onsGeographiesName}store'), '-', '')
 var onsGeographiesInsightsName = '${onsGeographiesName}-insights'
 // THE BELOW NEEDS TO BE SET TO LATEST
-var onsGeographiesFunctionsPackageUri = 'https://raw.githubusercontent.com/geovation/catalyst-deployment/refs/heads/main/azure/catalyst-ons-proxy-api-azure-0.1.0.zip'
+var onsGeographiesFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ons-geographies-azure/releases/latest/download/azure_function_release.zip'
 
 var ngdWrapperServicePlanName = '${ngdWrapperName}-serviceplan'
 var ngdWrapperFunctionName = '${ngdWrapperName}-function'
 var ngdWrapperStoreName = replace(toLower('${ngdWrapperName}store'), '-', '')
 var ngdWrapperInsightsName = '${ngdWrapperName}-insights'
 // THE BELOW NEEDS TO BE SET TO LATEST
-var ngdWrapperFunctionsPackageUri = 'https://raw.githubusercontent.com/Geovation/catalyst-deployment/refs/heads/main/azure/catalyst-ngd-wrapper-functions-python-app.zip'
+var ngdWrapperFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/release.zip'
 
 // VARIOUS RESOURCES
 // Log Analytics Workspace x1
