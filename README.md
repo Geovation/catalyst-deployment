@@ -1,6 +1,7 @@
 # Catalyst
 
-Catalyst is a set of tools created to make it easier to deploy infrastructure that uses Ordnance Survey data.
+Catalyst is a set of tools created to make it easier to deploy infrastructure that uses Ordnance Survey data
+We know from working with the Geovation community how frantic early months of development time can be, these tools are designed to take some of the burden away by automically deploying resources in the best way and shorttening the time it takes you to start creating value with Ordnance Survey Data.
 There are two Catalyst resources available through this deployment repository.
 1) NGD Wrappers - tools to aid the use of the [OS NGD Features API](https://docs.os.uk/osngd/getting-started/access-the-os-ngd-api/os-ngd-api-features).
 2) ONS Geographies - a proxy API for appending ONS lookup data to API calls to [OS Places API](https://docs.os.uk/os-apis/accessing-os-apis/os-places-api).
@@ -72,6 +73,10 @@ The two temporary resources list are not used by the final product, but only req
 | ONS Geographies Method      | `MethodONS`                         | ApiGateway Method   | API method to trigger ONS Geographies endpoints.                      |                                                                      |
 | Gateway API Deployment      | `ApiGatewayDeployment`              | ApiGateway Deployment| Packaged publication of the API.                                      |                                                                      |
 
+# Feedback and Feature requests
+
+We welcome all feedback, positive and negative. If you have a request for specific features please raise an issue and we will triage and respond as soon as possible
+
 ## Licence
 
-MIT Licence
+All Catalyst resources are hosted under the MIT Licence
