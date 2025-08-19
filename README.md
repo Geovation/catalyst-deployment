@@ -1,13 +1,19 @@
 # Catalyst
 
-Catalyst is a set of tools created to make it easier to deploy infrastructure that uses Ordnance Survey data 
+Catalyst is a set of tools created to make it easier to deploy infrastructure that uses Ordnance Survey data.
+There are two Catalyst resources available through this deployment repository.
+1) NGD Wrappers - tools to aid the use of the [OS NGD Features API](https://docs.os.uk/osngd/getting-started/access-the-os-ngd-api/os-ngd-api-features).
+2) ONS Geographies - a proxy API for appending ONS lookup data to API calls to [OS Places API](https://docs.os.uk/os-apis/accessing-os-apis/os-places-api).
+The code which this repository deploys is available at four [Geovation repositories](https://github.com/Geovation), one for each cloud platorm and resource.
 
-# Catalyst deployment
+# Catalyst Deployment
 
 This repository contains resources to deploy the Catalyst API tools to cloud services, including:
 
 - Azure
 - AWS
+
+Using these resources, you can get a **working API up and running in minutes** with minimal manual configuration.
 
 ## Azure
 
@@ -17,7 +23,9 @@ Azure deployment has been written using [Azure Resource Manager (ARM)](https://l
 
 AWS deployment has been written using [CloudFormation templates](https://aws.amazon.com/cloudformation/resources/templates/).
 
-1) Permissions
+### Instructions
+
+1. Permissions
 - You will require the following AWS perissions:
     - cloudformation:CreateStack
     - cloudformation:UpdateStack
@@ -30,17 +38,17 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
     - logs:CreateLogStream
     - logs:PutLogEvents
 - You will also need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
-2) CloudFormation Stack
-- Go to the [CloudFormation console](https://eu-west-2.console.aws.amazon.com/cloudformation), select 'Create stack' > 'With new resources (standard)'.
-- Under 'Prerequisite - Prepare template' ensure 'Choose an existing template' is selected.
-- Under 'Specify template' select 'Upload a template file' and upload main.yml from the aws directory.
-- On the 'Specify stack details' step, enter the following parameters:
-    - A stack name of your choice
-    - Set OSDataHubProjectKey and OSDataHubProjectSecret to the corresponding values from your the OS DataHub.
-    - If desired, modify the ApiGatewayStageName and other parameters from the defaults.
-- Keep default settings on the 'Configure stack option' page (note the acknowledgement that CloudFormation will create IAM resources), and create the stack.
-- It should take a few minutes for the Stack to build.
-3) Accessing the API
+2. CloudFormation Stack
+    1. Go to the [CloudFormation console](https://eu-west-2.console.aws.amazon.com/cloudformation), select 'Create stack' > 'With new resources (standard)'.
+    2. Under 'Prerequisite - Prepare template' ensure 'Choose an existing template' is selected.
+    3. Under 'Specify template' select 'Upload a template file' and upload main.yml from the aws directory.
+    4. On the 'Specify stack details' step, enter the following parameters:
+        - A stack name of your choice
+        - Set OSDataHubProjectKey and OSDataHubProjectSecret to the corresponding values from your the OS DataHub.
+        - If desired, modify the ApiGatewayStageName and other parameters from the defaults.
+    5. Keep default settings on the 'Configure stack option' page (note the acknowledgement that CloudFormation will create IAM resources), and create the stack.
+    6. It should take a few minutes for the Stack to build.
+3. Accessing the API
 - The various resources, including the Lambda Function and the Gateway API, can be viewed under 'Resources'.
 - Under 'Outputs', the apiGatewayInvokeURL value provides the base URL which can be used to access the various endpoints.
 - For use the API, please see the documentation under the [catalyst-ngd-wrappers-aws](https://github.com/Geovation/catalyst-ngd-wrappers-aws) repository.
@@ -54,9 +62,9 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
 | NGD Wrappers Function       | `NGDWrapperLambdaFunction`          | Lambda Function     | Contains code base for NGD Wrappers.                                  | `NGDWrapperLambdaRole`, all `NGDWrapperApiGatewayInvoke…` resources |
 | ONS Geographies Function    | `ONSGeographiesLambdaFunction`      | Lambda Function     | Contains code base for ONS Geographies.                               | `ONSGeographiesLambdaRole`, `ONSGeographiesApiGatewayInvoke`        |
 | Gateway API                 | `ApiGatewayRestApi`                 | ApiGateway REST API | Defines API to trigger Lambda functions.                              |                                                                      |
-| NGD Wrappers Endpoints      | `EndpointNGD…`                      | ApiGateway Resource | API endpoint definitions for NGD Wrapper.                             |                                                                      |
-| ONS Geographies Endpoints   | `EndpointONS…`                      | ApiGateway Resource | API endpoint definitions for ONS Geographies.                         |                                                                      |
-| NGD Wrappers Methods        | `MethodNGD…`                        | ApiGateway Method   | API methods to trigger NGD Wrapper endpoints.                         |                                                                      |
+| NGD Wrappers Endpoints      | `EndpointNGD…`(x6)                  | ApiGateway Resource | API endpoint definitions for NGD Wrapper.                             |                                                                      |
+| ONS Geographies Endpoints   | `EndpointONS…`(x3)                  | ApiGateway Resource | API endpoint definitions for ONS Geographies.                         |                                                                      |
+| NGD Wrappers Methods        | `MethodNGD…`(x4)                    | ApiGateway Method   | API methods to trigger NGD Wrapper endpoints.                         |                                                                      |
 | ONS Geographies Method      | `MethodONS`                         | ApiGateway Method   | API method to trigger ONS Geographies endpoints.                      |                                                                      |
 | Gateway API Deployment      | `ApiGatewayDeployment`              | ApiGateway Deployment| Packaged publication of the API.                                      |                                                                      |
 
