@@ -8,13 +8,13 @@ Parameters:
     MinLength: "32"
     MaxLength: "32"
     AllowedPattern: "[a-zA-Z0-9]*"
-    Description: The Client ID for the OS Data Hub
+    Description: Your Project API Key from the OS Data Hub
   OSDataHubProjectSecret:
     Type: String
     MinLength: "16"
     MaxLength: "16"
     AllowedPattern: "[a-zA-Z0-9]*"
-    Description: The Client Secret for the OS Data Hub
+    Description: The Project API Secret from the OS Data Hub
   NGDWrapperLambdaFunctionName:
     Type: String
     MinLength: "1"
@@ -261,11 +261,11 @@ Resources:
       Runtime: python3.13
       Role: !GetAtt NGDWrapperLambdaRole.Arn
       Timeout: 240
-      PackageType: Zip
       Environment:
         Variables:
           CLIENT_ID: !Ref OSDataHubProjectKey
           CLIENT_SECRET: !Ref OSDataHubProjectSecret
+      PackageType: Zip
       Code:
         S3Bucket: !Ref LambdaBucket
         S3Key: ngd_wrappers_lambda.zip
