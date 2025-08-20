@@ -3,6 +3,20 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >
   Catalyst tool deployment on AWS. Includes Lambda functions and an endpoints deployed through API Gateway.
 Parameters:
+  OSDataHubProjectKey:
+    Type: String
+    MinLength: "0"
+    MaxLength: "32"
+    AllowedPattern: "[a-zA-Z0-9]*"
+    Description: Your Project API Key from the OS Data Hub
+    Default: ""
+  OSDataHubProjectSecret:
+    Type: String
+    MinLength: "0"
+    MaxLength: "16"
+    AllowedPattern: "[a-zA-Z0-9]*"
+    Description: The Project API Secret from the OS Data Hub
+    Default: ""
   NGDWrapperLambdaFunctionName:
     Type: String
     MinLength: "1"
@@ -47,6 +61,13 @@ Parameters:
     Type: String
     Default: prod
     Description: The stage name for the API Gateway deployment
+  ApiKeyRequired:
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+    Description: Whether the API Gateway methods require an API key. Either 'true' or 'false'.
 
 Resources:
 
@@ -77,10 +98,6 @@ Resources:
                   - s3:PutObject
                   - s3:DeleteObject
                 Resource: !Sub "${LambdaBucket.Arn}/*"
-              - Effect: Allow
-                Action:
-                  - s3:DeleteBucket
-                Resource: !Sub "${LambdaBucket.Arn}"
         - PolicyName: CloudWatchLogsPolicy
           PolicyDocument:
             Version: "2012-10-17"
@@ -96,11 +113,12 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: CatalystInitFunction
-      Description: Initializes an S3 bucket with the NGD Wrapper code, or cleans up (ie. deletes) if requested.
+      Description: Populates S3 bucket with the NGD Wrapper code, or cleans up (ie. deletes) if requested.
       Handler: index.handler
       Role: !GetAtt InitFunctionRole.Arn
       Runtime: python3.13
-      Timeout: 180
+      MemorySize: 512
+      Timeout: 300
       Code:
         ZipFile: |
           import json
@@ -113,6 +131,7 @@ Resources:
 
           ngd_wrappers_url = "https://github.com/Geovation/catalyst-ngd-wrappers-aws/releases/latest/download/aws_lambda_release.zip"
           ons_geographies_url = "https://github.com/Geovation/catalyst-ons-geographies-aws/releases/latest/download/aws_lambda_release.zip"
+          ons_geographies_db_url = "https://github.com/Geovation/catalyst-ons-geographies-db/releases/latest/download/ons_postcodes.duckdb"
 
           def send_response(event, context, status, reason=None):
               response_body = {
@@ -151,6 +170,7 @@ Resources:
                   bucket = event['ResourceProperties']['BucketName']
                   ngd_key = event['ResourceProperties'].get('NGDKeyName', 'ngd_wrappers_lambda.zip')
                   ons_key = event['ResourceProperties'].get('ONSKeyName', 'ons_geographies_lambda.zip')
+                  ons_db_key = event['ResourceProperties'].get('ONSDBKeyName', 'ons_geographies_db.duckdb')
                   cleanup = event['ResourceProperties'].get('Cleanup', False)
 
                   if event['RequestType'] in ['Create', 'Update']:
@@ -165,10 +185,16 @@ Resources:
                               Bucket=bucket,
                               Key=ons_key
                           )
-                          logger.info("Deleting bucket.")
-                          s3.delete_bucket(Bucket=bucket)
+                          logger.info(f"Deleted {ons_key} from bucket {bucket}.")
                       else:
-                          logger.info("Downloading and uploading the zip file to S3.")
+                          response = urllib.request.urlopen(ons_geographies_db_url)
+                          db_data = response.read()
+                          s3.put_object(
+                              Bucket=bucket,
+                              Key=ons_db_key,
+                              Body=db_data
+                          )
+                          logger.info(f"Uploaded {ons_db_key} to bucket {bucket}.")
                           response = urllib.request.urlopen(ngd_wrappers_url)
                           zip_data = response.read()
                           s3.put_object(
@@ -202,6 +228,7 @@ Resources:
       BucketName: !Ref LambdaBucket
       NGDKeyName: ngd_wrappers_lambda.zip
       ONSKeyName: ons_geographies_lambda.zip
+      ONSDBKeyName: ons_geographies_db.duckdb
 
   # === Lambda Function ===
 
@@ -249,6 +276,10 @@ Resources:
       Runtime: python3.13
       Role: !GetAtt NGDWrapperLambdaRole.Arn
       Timeout: 240
+      Environment:
+        Variables:
+          CLIENT_ID: !Ref OSDataHubProjectKey
+          CLIENT_SECRET: !Ref OSDataHubProjectSecret
       PackageType: Zip
       Code:
         S3Bucket: !Ref LambdaBucket
@@ -348,7 +379,8 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt NGDWrapperLambdaFunction.Arn
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/features/*/*/*"
+      SourceArn: !Sub
+        "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/features/*/*/*"
 
   ONSGeographiesApiGatewayInvoke:
     Type: AWS::Lambda::Permission
@@ -356,7 +388,8 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt ONSGeographiesLambdaFunction.Arn
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/ons-geographies/places/*"
+      SourceArn: !Sub
+        "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/ons-geographies/places/*"
 
   # === API Gateway: API, Endpoints, Methods ===
 
@@ -376,76 +409,76 @@ Resources:
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: 'catalyst'
 
-  EndpointONSGeographies:
+  EndpointONS:
     Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !Ref EndpointBase
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: 'ons-geographies'
 
-  EndpointONSGeographiesPlaces:
+  EndpointONSPlaces:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !Ref EndpointONSGeographies
+      ParentId: !Ref EndpointONS
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: 'places'
 
-  EndpointONSGeographiesPlacesOperation:
+  EndpointONSPlacesOperation:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !Ref EndpointONSGeographiesPlaces
+      ParentId: !Ref EndpointONSPlaces
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: '{operation}'
 
-  EndpointLatestCollections:
+  EndpointNGDLatestCollections:
     Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !Ref EndpointBase
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: 'latest-collections'
   
-  EndpointLatestCollectionsCollection:
+  EndpointNGDLatestCollectionsCollection:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !Ref EndpointLatestCollections
+      ParentId: !Ref EndpointNGDLatestCollections
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: '{collection}'
 
-  EndpointFeatures:
+  EndpointNGDFeatures:
     Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !Ref EndpointBase
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: 'features'
 
-  EndpointFeaturesCollection:
+  EndpointNGDFeaturesCollection:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !Ref EndpointFeatures
+      ParentId: !Ref EndpointNGDFeatures
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: '{collection}'
 
-  EndpointFeaturesCollectionItems:
+  EndpointNGDFeaturesCollectionItems:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !Ref EndpointFeaturesCollection
+      ParentId: !Ref EndpointNGDFeaturesCollection
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: 'items'
 
-  EndpointFeaturesCollectionItemsFunction:
+  EndpointNGDFeaturesCollectionItemsFunction:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !Ref EndpointFeaturesCollectionItems
+      ParentId: !Ref EndpointNGDFeaturesCollectionItems
       RestApiId: !Ref ApiGatewayRestApi
       PathPart: '{function}'
 
-  MethodLatestCollections:
+  MethodNGDLatestCollections:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: false
+      ApiKeyRequired: !Ref ApiKeyRequired
       HttpMethod: GET
       AuthorizationType: NONE
-      ResourceId: !Ref EndpointLatestCollections
+      ResourceId: !Ref EndpointNGDLatestCollections
       RestApiId: !Ref ApiGatewayRestApi
       Integration:
         Type: AWS_PROXY
@@ -454,13 +487,13 @@ Resources:
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
 
-  MethodLatestCollectionsCollection:
+  MethodNGDLatestCollectionsCollection:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: false
+      ApiKeyRequired: !Ref ApiKeyRequired
       HttpMethod: GET
       AuthorizationType: NONE
-      ResourceId: !Ref EndpointLatestCollectionsCollection
+      ResourceId: !Ref EndpointNGDLatestCollectionsCollection
       RestApiId: !Ref ApiGatewayRestApi
       Integration:
         Type: AWS_PROXY
@@ -469,13 +502,13 @@ Resources:
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
 
-  MethodItems:
+  MethodNGDItems:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: false
+      ApiKeyRequired: !Ref ApiKeyRequired
       HttpMethod: GET
       AuthorizationType: NONE
-      ResourceId: !Ref EndpointFeaturesCollectionItems
+      ResourceId: !Ref EndpointNGDFeaturesCollectionItems
       RestApiId: !Ref ApiGatewayRestApi
       Integration:
         Type: AWS_PROXY
@@ -484,13 +517,13 @@ Resources:
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
 
-  MethodItemsFunction:
+  MethodNGDItemsFunction:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: false
+      ApiKeyRequired: !Ref ApiKeyRequired
       HttpMethod: GET
       AuthorizationType: NONE
-      ResourceId: !Ref EndpointFeaturesCollectionItemsFunction
+      ResourceId: !Ref EndpointNGDFeaturesCollectionItemsFunction
       RestApiId: !Ref ApiGatewayRestApi
       Integration:
         Type: AWS_PROXY
@@ -499,13 +532,13 @@ Resources:
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt NGDWrapperLambdaFunction.Arn
 
-  MethodONSGeographies:
+  MethodONS:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: false
+      ApiKeyRequired: !Ref ApiKeyRequired
       HttpMethod: GET
       AuthorizationType: NONE
-      ResourceId: !Ref EndpointONSGeographiesPlacesOperation
+      ResourceId: !Ref EndpointONSPlacesOperation
       RestApiId: !Ref ApiGatewayRestApi
       Integration:
         Type: AWS_PROXY
@@ -519,11 +552,11 @@ Resources:
   ApiGatewayDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn:
-      - MethodLatestCollections
-      - MethodLatestCollectionsCollection
-      - MethodItems
-      - MethodItemsFunction
-      - MethodONSGeographies
+      - MethodNGDLatestCollections
+      - MethodNGDLatestCollectionsCollection
+      - MethodNGDItems
+      - MethodNGDItemsFunction
+      - MethodONS
     Properties:
       RestApiId: !Ref ApiGatewayRestApi
       StageName: !Ref ApiGatewayStageName
@@ -531,7 +564,7 @@ Resources:
 
 Outputs:
   apiGatewayInvokeURL:
-    Value: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiGatewayStageName}/catalyst
+    Value: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiGatewayStageName}/
     Description: The URL to invoke the API Gateway endpoint
 
   NGDWrapperLambdaFunctionArn:
