@@ -61,6 +61,13 @@ Parameters:
     Type: String
     Default: prod
     Description: The stage name for the API Gateway deployment
+  S3BucketName:
+    Type: String
+    MinLength: "3"
+    MaxLength: "63"
+    AllowedPattern: "[a-z0-9][a-z0-9-]*[a-z0-9]"
+    Description: The name of the S3 bucket to store Lambda code
+    Default: catalyst-data-store
   ApiKeyRequired:
     Type: String
     Default: false
@@ -76,7 +83,7 @@ Resources:
   LambdaBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "catalyst-temporary-bucket"
+      BucketName: !Ref S3BucketName
 
   InitFunctionRole:
     Type: AWS::IAM::Role
