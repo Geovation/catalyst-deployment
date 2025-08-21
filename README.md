@@ -45,7 +45,7 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
     3. Under 'Specify template' select 'Upload a template file' and upload main.yml from the aws directory.
     4. On the 'Specify stack details' step, enter the following parameters:
         - A stack name of your choice
-        - Set OSDataHubProjectKey and OSDataHubProjectSecret to the corresponding values from your the OS DataHub.
+        - If you want automatic internal OS authorisation, set OSDataHubProjectKey and OSDataHubProjectSecret to the corresponding values from your the OS DataHub.
         - If desired, modify the ApiGatewayStageName and other parameters from the defaults.
     5. Keep default settings on the 'Configure stack option' page (note the acknowledgement that CloudFormation will create IAM resources), and create the stack.
     6. It should take a few minutes for the Stack to build.
@@ -53,6 +53,19 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
 - The various resources, including the Lambda Function and the Gateway API, can be viewed under 'Resources'.
 - Under 'Outputs', the apiGatewayInvokeURL value provides the base URL which can be used to access the various endpoints.
 - For use the API, please see the documentation under the [catalyst-ngd-wrappers-aws](https://github.com/Geovation/catalyst-ngd-wrappers-aws) repository.
+
+### Stack Deletion
+Deleting a stack automatically deletes all associated resources.
+
+However, if you choose to delete a stack, you must **first manually empty the S3 bucket**, as only empty buckets can be deleted automatically. This can be done through the [S3 console](https://eu-west-2.console.aws.amazon.com/s3).
+
+### Authentication
+Both API Gateway and OS DataHub authorisation must be configured for use of the API.
+- If OSDataHubProjectKey and OSDataHubProjectSecret are left blank in setup, then the Gateway API is left unauthorised, allowing open access to the endpoints.
+    - You can add authorisation manually if you wish: for example, by creating a Usage Plan and API key on the [API Gateway console](https://eu-west-2.console.aws.amazon.com/apigateway).
+- If you supply OSDataHubProjectKey and OSDataHubProjectSecret in setup, API Gateway key authorisation is automatically enabled, and a key and usage plan generated (see below)
+    - You can find the key under "API Keys" on the API Gateway console.
+    - This key must be passed to all API requests as the [X-API-Key header](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-key-source.html).
 
 ### Resources Overview
 
@@ -63,7 +76,7 @@ The two temporary resources list are not used by the final product, but only req
 | Resource                     | Resource Name in `main.yml`         | Resource Type           | Notes                                                                 | Other Associated Resources                                      |
 |-----------------------------|-------------------------------------|--------------------------|-----------------------------------------------------------------------|------------------------------------------------------------------|
 | Temporary S3 Bucket         | LambdaBucket                        | S3 Bucket                | Storage location for the ONS Geography duckdb database. Also used as an intermediary storage location for the Lambda function code between Github and Lambda functions.    |                                                                  |
-| Temporary Bootstrap Function| InitFunction                        | Lambda Function          | Moves the lambda function code and the ONS Geography database from GitHub to S3. Triggered by Initialize and CleanupBootstrapLambda custom resources.   | Initialize, CleanupBootstrapLambda                              |
+| Temporary Bootstrap Function| InitFunction                        | Lambda Function          | Moves the lambda function code and the ONS Geography database from GitHub to S3. Triggered by _Initialize_ and _CleanupBootstrapLambda_ custom resources.   | Initialize, CleanupBootstrapLambda                              |
 | NGD Wrappers Function       | NGDWrapperLambdaFunction            | Lambda Function          | Contains code base for NGD Wrappers.                                 | NGDWrapperLambdaRole, NGDWrapperApiGatewayInvoke…               |
 | ONS Geographies Function    | ONSGeographiesLambdaFunction        | Lambda Function          | Contains code base for ONS Geographies.                              | ONSGeographiesLambdaRole, ONSGeographiesApiGatewayInvoke        |
 | Gateway API                 | ApiGatewayRestApi                   | ApiGateway REST API      | Defines API to trigger Lambda functions.                             |                                                                  |
@@ -72,9 +85,9 @@ The two temporary resources list are not used by the final product, but only req
 | NGD Wrappers Methods        | MethodNGD…                          | ApiGateway Method        | API methods to trigger NGD Wrapper endpoints.                        |                                                                  |
 | ONS Geographies Method      | MethodONS                           | ApiGateway Method        | API method to trigger ONS Geographies endpoints.                     |                                                                  |
 | Gateway API Deployment      | ApiGatewayDeployment                | ApiGateway Deployment    | Packaged publication of the API.                                     |                                                                  |
-| Gateway Usage Plan          | UsagePlan                           | ApiGateway Usage Plan    | Usage plan for accessing Gateway API stage.                          |                                                                  |
+| Gateway Usage Plan          | UsagePlan                           | ApiGateway Usage Plan    | Usage plan for accessing Gateway API stage. Generated for security only if OS Datahub credentials are supplied as parameters for automatic OS authentication.                          |                                                                  |
 | Gateway API Key             | ApiKey                              | ApiGateway API Key       | An API key associated with the usage plan and Gateway API stage. Generated for security only if OS Datahub credentials are supplied as parameters for automatic OS authentication. |                                                                  |
-| Usage Plan <> Key Association| UsagePlanKey                       | ApiGateway Usage Plan Key| Associates API key with usage plan.                                  |                                                                  |
+| Usage Plan <> Key Association| UsagePlanKey                       | ApiGateway Usage Plan Key| Associates API key with usage plan. Generated for security only if OS Datahub credentials are supplied as parameters for automatic OS authentication.                                  |                                                                  |
 
 # Feedback and Feature requests
 
