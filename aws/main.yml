@@ -21,21 +21,21 @@ Parameters:
     Type: String
     MinLength: 1
     MaxLength: 64
-    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
     Description: The stage name for the API Gateway deployment
     Default: prod
   S3BucketName:
     Type: String
     MinLength: 3
     MaxLength: 64
-    AllowedPattern: "[a-z0-9][a-z0-9-]*[a-z0-9]"
+    AllowedPattern: "[a-z0-9-]*"
     Description: The name of the S3 bucket to store Lambda code
     Default: catalyst-data-store
   ONSGeographyDBFilePath:
     Type: String
     MinLength: 1
     MaxLength: 64
-    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9._-]*"
     Description: The name of the ONS Geography database file
     Default: ons_postcodes.duckdb
   OSDataHubProjectKey:
@@ -476,7 +476,8 @@ Resources:
   MethodNGDLatestCollections:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: !Ref GatewayAuthRequired
+      ApiKeyRequired:
+        Fn::If: [GatewayAuthRequired, true, false]
       HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointNGDLatestCollections
@@ -491,7 +492,8 @@ Resources:
   MethodNGDLatestCollectionsCollection:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: !Ref GatewayAuthRequired
+      ApiKeyRequired:
+        Fn::If: [GatewayAuthRequired, true, false]
       HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointNGDLatestCollectionsCollection
@@ -506,7 +508,8 @@ Resources:
   MethodNGDItems:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: !Ref GatewayAuthRequired
+      ApiKeyRequired:
+        Fn::If: [GatewayAuthRequired, true, false]
       HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointNGDFeaturesCollectionItems
@@ -521,7 +524,8 @@ Resources:
   MethodNGDItemsFunction:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: !Ref GatewayAuthRequired
+      ApiKeyRequired:
+        Fn::If: [GatewayAuthRequired, true, false]
       HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointNGDFeaturesCollectionItemsFunction
@@ -536,7 +540,8 @@ Resources:
   MethodONS:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: !Ref GatewayAuthRequired
+      ApiKeyRequired:
+        Fn::If: [GatewayAuthRequired, true, false]
       HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointONSPlacesOperation
@@ -570,9 +575,9 @@ Resources:
     Properties:
       Description: Usage plan for the Catalyst API
       ApiStages:
-        - ApiId: !Ref Api
+        - ApiId: !Ref ApiGatewayRestApi
           Stage: !Ref ApiGatewayStageName
-      UsagePlanName: "My Usage Plan"
+      UsagePlanName: CatalystUsagePlan
 
   ApiKey:
     Type: AWS::ApiGateway::ApiKey
