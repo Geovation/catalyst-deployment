@@ -26,7 +26,7 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
 
 ### Instructions
 
-1. **Permissions**
+#### 1. **Permissions**
 
 - You will require the following AWS perissions:
     - cloudformation:CreateStack
@@ -40,34 +40,37 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
     - logs:PutLogEvents
 - You will also need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
 
-2. **CloudFormation Stack**
+#### 2. **CloudFormation Stack**
 
-    1. Go to the [CloudFormation console](https://eu-west-2.console.aws.amazon.com/cloudformation), select 'Create stack' > 'With new resources (standard)'.
-    2. Under 'Prerequisite - Prepare template', ensure 'Choose an existing template' is selected, and under 'Specify template' select 'Upload a template file' and upload main.yml from the aws directory.
-    4. On the 'Specify stack details' step, enter the following parameters:
-        - A stack name of your choice
-        - If you want automatic internal OS authorisation, set OSDataHubProjectKey and OSDataHubProjectSecret to the corresponding values from your the OS DataHub.
-        - If desired, modify the ApiGatewayStageName and other parameters from the defaults.
-    5. Keep default settings on the 'Configure stack option' page (note the acknowledgement that CloudFormation will create IAM resources), and create the stack.
-    6. It should take a few minutes for the Stack to build.
+1. Go to the [CloudFormation console](https://eu-west-2.console.aws.amazon.com/cloudformation), select 'Create stack' > 'With new resources (standard)'.
+2. Under 'Prerequisite - Prepare template', ensure 'Choose an existing template' is selected, and under 'Specify template' select 'Upload a template file' and upload main.yml from the aws directory.
+4. On the 'Specify stack details' step, enter the following parameters:
+    - A stack name of your choice
+    - If you want automatic internal OS authorisation, set OSDataHubProjectKey and OSDataHubProjectSecret to the corresponding values from your the OS DataHub.
+    - If desired, modify the ApiGatewayStageName and other parameters from the defaults.
+5. Keep default settings on the 'Configure stack option' page (note the acknowledgement that CloudFormation will create IAM resources), and create the stack.
+6. It should take a few minutes for the Stack to build.
 
-    **CLI Alternative Method**
-    Below is an example of how the AWS CLI could be used as an alternative to the CloudFormation interface.
-    ```
-    aws configure
-        AWS Access Key ID [None]: <your-access-key-id>
-        AWS Secret Access Key [None]: <your-secret-access-key>
-        Default region name [None]: eu-west-2
-        Default output format [None]: json
+#### **_CLI Alternative Method_**
 
-    aws cloudformation create-stack
-        --stack-name catalyst-deployment
-        --template-body file://path/to/main.yml
-        --capabilities CAPABILITY_NAMED_IAM
-        --parameters ParameterKey=ApiKeyName,ParameterValue=CustomApiKeyName ParameterKey=OSDataHubProjectKey,ParameterValue=<your-datahub-key ParameterKey=OSDataHubProjectSecret,ParameterValue=<your-datahub-secret>>
-    ```
+Below is a demonstration of how the AWS CLI could be used as an alternative to the CloudFormation interface.
+Find further details and parameters [here](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html).
 
-3. **Accessing the API**
+```
+aws configure
+    AWS Access Key ID [None]: <your-access-key-id>
+    AWS Secret Access Key [None]: <your-secret-access-key>
+    Default region name [None]: eu-west-2
+    Default output format [None]: json
+
+aws cloudformation create-stack
+    --stack-name catalyst-deployment
+    --template-body file://path/to/main.yml
+    --capabilities CAPABILITY_NAMED_IAM
+    --parameters ParameterKey=ApiKeyName,ParameterValue=CustomApiKeyName ParameterKey=OSDataHubProjectKey,ParameterValue=<your-datahub-key> ParameterKey=OSDataHubProjectSecret,ParameterValue=<your-datahub-secret>
+```
+
+#### 3. **Accessing the API**
 
 - Links to the various resources, including the Lambda Function and the Gateway API, can be viewed under 'Resources'. If you wish, extra settings (eg. API usage throttling, see below) can be set/changed using these.
 - Under 'Outputs', the apiGatewayInvokeURL value provides the base URL which can be used to access the various endpoints.
