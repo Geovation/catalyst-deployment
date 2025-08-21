@@ -5,79 +5,56 @@ Description: >
 Parameters:
   OSDataHubProjectKey:
     Type: String
-    MinLength: "0"
-    MaxLength: "32"
+    MinLength: 0
+    MaxLength: 32
     AllowedPattern: "[a-zA-Z0-9]*"
-    Description: Your Project API Key from the OS Data Hub
+    Description: Your Project API Key from the OS Data Hub. If given, the API Gateway will be protected by an API key.
     Default: ""
   OSDataHubProjectSecret:
     Type: String
-    MinLength: "0"
-    MaxLength: "16"
+    MinLength: 0
+    MaxLength: 16
     AllowedPattern: "[a-zA-Z0-9]*"
-    Description: The Project API Secret from the OS Data Hub
+    Description: The Project API Secret from the OS Data Hub. If given, the API Gateway will be protected by an API key.
     Default: ""
   NGDWrapperLambdaFunctionName:
     Type: String
-    MinLength: "1"
-    MaxLength: "64"
+    MinLength: 1
+    MaxLength: 64
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
     Description: The name of the NGD Wrapper Lambda function
     Default: Lambda-NGDWrapper
-  NGDWrapperLambdaRoleName: 
-    Type: String
-    MinLength: "1"
-    MaxLength: "64"
-    AllowedPattern: '[\w+=,.@-]+'
-    Description: The name of the IAM role used as the NGD Wrapper execution role
-    Default: Lambda-NGDWrapper-Role
-  NGDWrapperLambdaPolicyName:
-    Type: String
-    MinLength: "1"
-    MaxLength: "128"
-    AllowedPattern: '[\w+=,.@-]+'
-    Default: Lambda-NGDWrapper-Policy
   ONSGeographiesLambdaFunctionName:
     Type: String
-    MinLength: "1"
-    MaxLength: "64"
+    MinLength: 1
+    MaxLength: 64
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
     Description: The name of the ONS Geographies Lambda function
     Default: Lambda-ONSGeographies
-  ONSGeographiesLambdaRoleName:
-    Type: String
-    MinLength: "1"
-    MaxLength: "64"
-    AllowedPattern: '[\w+=,.@-]+'
-    Description: The name of the IAM role used as the Lambda execution role
-    Default: Lambda-ONSGeographies-Role
-  ONSGeographiesLambdaPolicyName:
-    Type: String
-    MinLength: "1"
-    MaxLength: "128"
-    AllowedPattern: '[\w+=,.@-]+'
-    Default: Lambda-ONSGeographies-Policy
   ApiGatewayStageName:
     Type: String
-    Default: prod
+    MinLength: 1
+    MaxLength: 64
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*
     Description: The stage name for the API Gateway deployment
+    Default: prod
   S3BucketName:
     Type: String
-    MinLength: "3"
-    MaxLength: "63"
+    MinLength: 3
+    MaxLength: 64
     AllowedPattern: "[a-z0-9][a-z0-9-]*[a-z0-9]"
     Description: The name of the S3 bucket to store Lambda code
     Default: catalyst-data-store
   ApiKeyName:
     Type: String
-    MinLength: "1"
-    MaxLength: "128"
+    MinLength: 0
+    MaxLength: 128
     AllowedPattern: '[\w+=,.@-]+'
+    Description: The name of the API key to be created for the API Gateway usage plan if DataHub credentials are supplied.
     Default: CatalystApiKey
-    Description: The name of the API key to be created for the API Gateway usage plan. Only generated if DataHub credentials are supplied.
 
 Conditions:
-  ApiKeyRequired: !Or
+  GatewayAuthRequired: !Or
     - !Not [!Equals [!Ref OSDataHubProjectKey, ""]]
     - !Not [!Equals [!Ref OSDataHubProjectSecret, ""]]
 
@@ -247,7 +224,7 @@ Resources:
   NGDWrapperLambdaRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Ref NGDWrapperLambdaRoleName
+      RoleName: Lambda-NGDWrapper-Role
       Description: An execution role for the NGD Wrapper Lambda function
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -300,7 +277,7 @@ Resources:
   ONSGeographiesLambdaRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Ref ONSGeographiesLambdaRoleName
+      RoleName: Lambda-ONSGeographies-Role
       Description: An execution role for the ONS Geographies Proxy
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -487,7 +464,7 @@ Resources:
   MethodNGDLatestCollections:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: !Ref ApiKeyRequired
+      ApiKeyRequired: !Ref GatewayAuthRequired
       HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointNGDLatestCollections
@@ -502,7 +479,7 @@ Resources:
   MethodNGDLatestCollectionsCollection:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: !Ref ApiKeyRequired
+      ApiKeyRequired: !Ref GatewayAuthRequired
       HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointNGDLatestCollectionsCollection
@@ -517,7 +494,7 @@ Resources:
   MethodNGDItems:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: !Ref ApiKeyRequired
+      ApiKeyRequired: !Ref GatewayAuthRequired
       HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointNGDFeaturesCollectionItems
@@ -532,7 +509,7 @@ Resources:
   MethodNGDItemsFunction:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: !Ref ApiKeyRequired
+      ApiKeyRequired: !Ref GatewayAuthRequired
       HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointNGDFeaturesCollectionItemsFunction
@@ -547,7 +524,7 @@ Resources:
   MethodONS:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: !Ref ApiKeyRequired
+      ApiKeyRequired: !Ref GatewayAuthRequired
       HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointONSPlacesOperation
@@ -576,6 +553,7 @@ Resources:
 
   UsagePlan:
     Type: AWS::ApiGateway::UsagePlan
+    Condition: GatewayAuthRequired
     DependsOn: ApiGatewayDeployment
     Properties:
       Description: Usage plan for the Catalyst API
@@ -586,6 +564,8 @@ Resources:
 
   ApiKey:
     Type: AWS::ApiGateway::ApiKey
+    Condition: GatewayAuthRequired
+    Description: API Key for the Catalyst API
     Properties: 
       Description: API Key
       Name: !Ref ApiKeyName
@@ -593,6 +573,8 @@ Resources:
 
   UsagePlanKey:
     Type: AWS::ApiGateway::UsagePlanKey
+    Condition: GatewayAuthRequired
+    Description: Usage plan key for the Catalyst API
     Properties:
       KeyId: !Ref ApiKey
       KeyType: API_KEY
