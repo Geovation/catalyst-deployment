@@ -3,78 +3,67 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >
   Catalyst tool deployment on AWS. Includes Lambda functions and an endpoints deployed through API Gateway.
 Parameters:
-  OSDataHubProjectKey:
-    Type: String
-    MinLength: "0"
-    MaxLength: "32"
-    AllowedPattern: "[a-zA-Z0-9]*"
-    Description: Your Project API Key from the OS Data Hub
-    Default: ""
-  OSDataHubProjectSecret:
-    Type: String
-    MinLength: "0"
-    MaxLength: "16"
-    AllowedPattern: "[a-zA-Z0-9]*"
-    Description: The Project API Secret from the OS Data Hub
-    Default: ""
   NGDWrapperLambdaFunctionName:
     Type: String
-    MinLength: "1"
-    MaxLength: "64"
+    MinLength: 1
+    MaxLength: 64
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
     Description: The name of the NGD Wrapper Lambda function
     Default: Lambda-NGDWrapper
-  NGDWrapperLambdaRoleName: 
-    Type: String
-    MinLength: "1"
-    MaxLength: "64"
-    AllowedPattern: '[\w+=,.@-]+'
-    Description: The name of the IAM role used as the NGD Wrapper execution role
-    Default: Lambda-NGDWrapper-Role
-  NGDWrapperLambdaPolicyName:
-    Type: String
-    MinLength: "1"
-    MaxLength: "128"
-    AllowedPattern: '[\w+=,.@-]+'
-    Default: Lambda-NGDWrapper-Policy
   ONSGeographiesLambdaFunctionName:
     Type: String
-    MinLength: "1"
-    MaxLength: "64"
+    MinLength: 1
+    MaxLength: 64
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
     Description: The name of the ONS Geographies Lambda function
     Default: Lambda-ONSGeographies
-  ONSGeographiesLambdaRoleName:
-    Type: String
-    MinLength: "1"
-    MaxLength: "64"
-    AllowedPattern: '[\w+=,.@-]+'
-    Description: The name of the IAM role used as the Lambda execution role
-    Default: Lambda-ONSGeographies-Role
-  ONSGeographiesLambdaPolicyName:
-    Type: String
-    MinLength: "1"
-    MaxLength: "128"
-    AllowedPattern: '[\w+=,.@-]+'
-    Default: Lambda-ONSGeographies-Policy
   ApiGatewayStageName:
     Type: String
-    Default: prod
+    MinLength: 1
+    MaxLength: 64
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
     Description: The stage name for the API Gateway deployment
+    Default: prod
   S3BucketName:
     Type: String
-    MinLength: "3"
-    MaxLength: "63"
-    AllowedPattern: "[a-z0-9][a-z0-9-]*[a-z0-9]"
+    MinLength: 3
+    MaxLength: 64
+    AllowedPattern: "[a-z0-9-]*"
     Description: The name of the S3 bucket to store Lambda code
     Default: catalyst-data-store
-  ApiKeyRequired:
+  ONSGeographyDBFilePath:
     Type: String
-    Default: false
-    AllowedValues:
-      - true
-      - false
-    Description: Whether the API Gateway methods require an API key. Either 'true' or 'false'.
+    MinLength: 1
+    MaxLength: 64
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9._-]*"
+    Description: The name of the ONS Geography database file
+    Default: ons_postcodes.duckdb
+  OSDataHubProjectKey:
+    Type: String
+    MinLength: 0
+    MaxLength: 32
+    AllowedPattern: "[a-zA-Z0-9]*"
+    Description: Your Project API Key from the OS Data Hub. If given, the API Gateway will be protected by an API key.
+    Default: ""
+  OSDataHubProjectSecret:
+    Type: String
+    MinLength: 0
+    MaxLength: 16
+    AllowedPattern: "[a-zA-Z0-9]*"
+    Description: The Project API Secret from the OS Data Hub. If given, the API Gateway will be protected by an API key.
+    Default: ""
+  ApiKeyName:
+    Type: String
+    MinLength: 0
+    MaxLength: 128
+    AllowedPattern: '[\w+=,.@-]+'
+    Description: The name of the API key to be created for the API Gateway usage plan if DataHub credentials are supplied.
+    Default: CatalystApiKey
+
+Conditions:
+  GatewayAuthRequired: !Or
+    - !Not [!Equals [!Ref OSDataHubProjectKey, ""]]
+    - !Not [!Equals [!Ref OSDataHubProjectSecret, ""]]
 
 Resources:
 
@@ -242,7 +231,7 @@ Resources:
   NGDWrapperLambdaRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Ref NGDWrapperLambdaRoleName
+      RoleName: Lambda-NGDWrapper-Role
       Description: An execution role for the NGD Wrapper Lambda function
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -295,7 +284,7 @@ Resources:
   ONSGeographiesLambdaRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Ref ONSGeographiesLambdaRoleName
+      RoleName: Lambda-ONSGeographies-Role
       Description: An execution role for the ONS Geographies Proxy
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -336,6 +325,11 @@ Resources:
       Runtime: python3.13
       Role: !GetAtt ONSGeographiesLambdaRole.Arn
       Timeout: 240
+      Environment:
+        Variables:
+          ONSGEOGRAPHY_DB_BUCKET: !Ref S3BucketName
+          ONSGEOGRAPHY_DB_FILE: !Ref ONSGeographyDBFilePath
+      PackageType: Zip
       Code:
         S3Bucket: !Ref LambdaBucket
         S3Key: ons_geographies_lambda.zip
@@ -482,7 +476,8 @@ Resources:
   MethodNGDLatestCollections:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: !Ref ApiKeyRequired
+      ApiKeyRequired:
+        Fn::If: [GatewayAuthRequired, true, false]
       HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointNGDLatestCollections
@@ -497,7 +492,8 @@ Resources:
   MethodNGDLatestCollectionsCollection:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: !Ref ApiKeyRequired
+      ApiKeyRequired:
+        Fn::If: [GatewayAuthRequired, true, false]
       HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointNGDLatestCollectionsCollection
@@ -512,7 +508,8 @@ Resources:
   MethodNGDItems:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: !Ref ApiKeyRequired
+      ApiKeyRequired:
+        Fn::If: [GatewayAuthRequired, true, false]
       HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointNGDFeaturesCollectionItems
@@ -527,7 +524,8 @@ Resources:
   MethodNGDItemsFunction:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: !Ref ApiKeyRequired
+      ApiKeyRequired:
+        Fn::If: [GatewayAuthRequired, true, false]
       HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointNGDFeaturesCollectionItemsFunction
@@ -542,7 +540,8 @@ Resources:
   MethodONS:
     Type: AWS::ApiGateway::Method
     Properties:
-      ApiKeyRequired: !Ref ApiKeyRequired
+      ApiKeyRequired:
+        Fn::If: [GatewayAuthRequired, true, false]
       HttpMethod: GET
       AuthorizationType: NONE
       ResourceId: !Ref EndpointONSPlacesOperation
@@ -554,7 +553,7 @@ Resources:
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt ONSGeographiesLambdaFunction.Arn
 
-  # === API Gateway Deployment ===
+  # === API Gateway Deployment and Authentication ===
 
   ApiGatewayDeployment:
     Type: AWS::ApiGateway::Deployment
@@ -569,6 +568,35 @@ Resources:
       StageName: !Ref ApiGatewayStageName
       Description: 'CatalyST API Gateway Deployment'
 
+  UsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    Condition: GatewayAuthRequired
+    DependsOn: ApiGatewayDeployment
+    Properties:
+      Description: Usage plan for the Catalyst API
+      ApiStages:
+        - ApiId: !Ref ApiGatewayRestApi
+          Stage: !Ref ApiGatewayStageName
+      UsagePlanName: CatalystUsagePlan
+
+  ApiKey:
+    Type: AWS::ApiGateway::ApiKey
+    Condition: GatewayAuthRequired
+    Description: API Key for the Catalyst API
+    Properties: 
+      Description: API Key
+      Name: !Ref ApiKeyName
+      Enabled: True
+
+  UsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Condition: GatewayAuthRequired
+    Description: Usage plan key for the Catalyst API
+    Properties:
+      KeyId: !Ref ApiKey
+      KeyType: API_KEY
+      UsagePlanId: !Ref UsagePlan
+
 Outputs:
   apiGatewayInvokeURL:
     Value: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiGatewayStageName}/
@@ -577,7 +605,7 @@ Outputs:
   NGDWrapperLambdaFunctionArn:
     Value: !GetAtt NGDWrapperLambdaFunction.Arn
     Description: The ARN of the Lambda function
-  
+
   ONSGeographiesLambdaFunctionArn:
     Value: !GetAtt ONSGeographiesLambdaFunction.Arn
     Description: The ARN of the ONS Geographies Lambda function
