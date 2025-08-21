@@ -3,20 +3,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >
   Catalyst tool deployment on AWS. Includes Lambda functions and an endpoints deployed through API Gateway.
 Parameters:
-  OSDataHubProjectKey:
-    Type: String
-    MinLength: 0
-    MaxLength: 32
-    AllowedPattern: "[a-zA-Z0-9]*"
-    Description: Your Project API Key from the OS Data Hub. If given, the API Gateway will be protected by an API key.
-    Default: ""
-  OSDataHubProjectSecret:
-    Type: String
-    MinLength: 0
-    MaxLength: 16
-    AllowedPattern: "[a-zA-Z0-9]*"
-    Description: The Project API Secret from the OS Data Hub. If given, the API Gateway will be protected by an API key.
-    Default: ""
   NGDWrapperLambdaFunctionName:
     Type: String
     MinLength: 1
@@ -45,6 +31,27 @@ Parameters:
     AllowedPattern: "[a-z0-9][a-z0-9-]*[a-z0-9]"
     Description: The name of the S3 bucket to store Lambda code
     Default: catalyst-data-store
+  ONSGeographyDBFilePath:
+    Type: String
+    MinLength: 1
+    MaxLength: 64
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+    Description: The name of the ONS Geography database file
+    Default: ons_postcodes.duckdb
+  OSDataHubProjectKey:
+    Type: String
+    MinLength: 0
+    MaxLength: 32
+    AllowedPattern: "[a-zA-Z0-9]*"
+    Description: Your Project API Key from the OS Data Hub. If given, the API Gateway will be protected by an API key.
+    Default: ""
+  OSDataHubProjectSecret:
+    Type: String
+    MinLength: 0
+    MaxLength: 16
+    AllowedPattern: "[a-zA-Z0-9]*"
+    Description: The Project API Secret from the OS Data Hub. If given, the API Gateway will be protected by an API key.
+    Default: ""
   ApiKeyName:
     Type: String
     MinLength: 0
@@ -318,6 +325,11 @@ Resources:
       Runtime: python3.13
       Role: !GetAtt ONSGeographiesLambdaRole.Arn
       Timeout: 240
+      Environment:
+        Variables:
+          ONSGEOGRAPHY_DB_BUCKET: !Ref S3BucketName
+          ONSGEOGRAPHY_DB_FILE: !Ref ONSGeographyDBFilePath
+      PackageType: Zip
       Code:
         S3Bucket: !Ref LambdaBucket
         S3Key: ons_geographies_lambda.zip
