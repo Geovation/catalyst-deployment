@@ -98,7 +98,7 @@ However, if you choose to delete a stack, you must **first manually empty the S3
 ### Resources Overview
 
 Running the main.yaml file automatically generates all the required resources. These resources are summarised below.
-Note that an S3 Bucket is used as a temporary code store before is is loaded into lambda functions. This bucket is deleted after use.
+Note that an S3 Bucket is used as a temporary code store for the lambda functions, as well as a permanent store for the ONS Geographies ducdb database.
 The two temporary resources list are not used by the final product, but only required for the initial import of the code.
 
 | Resource                     | Resource Name in `main.yml`         | Resource Type           | Notes                                                                 | Other Associated Resources                                      |
