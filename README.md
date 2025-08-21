@@ -67,13 +67,16 @@ aws cloudformation create-stack
     --stack-name catalyst-deployment
     --template-body file://path/to/main.yml
     --capabilities CAPABILITY_NAMED_IAM
-    --parameters ParameterKey=ApiKeyName,ParameterValue=CustomApiKeyName ParameterKey=OSDataHubProjectKey,ParameterValue=<your-datahub-key> ParameterKey=OSDataHubProjectSecret,ParameterValue=<your-datahub-secret>
+    --parameters
+        ParameterKey=ApiKeyName,ParameterValue=CustomApiKeyName
+        ParameterKey=OSDataHubProjectKey,ParameterValue=<your-datahub-key>
+        ParameterKey=OSDataHubProjectSecret,ParameterValue=<your-datahub-secret>
 ```
 
 #### 3. **Accessing the API**
 
 - Links to the various resources, including the Lambda Function and the Gateway API, can be viewed under 'Resources'. If you wish, extra settings (eg. API usage throttling, see below) can be set/changed using these.
-- Under 'Outputs', the apiGatewayInvokeURL value provides the base URL which can be used to access the various endpoints.
+- Under 'Outputs', the apiGatewayInvokeURL value provides the root URL which can be used to access the various endpoints.
 - For use of the API, please see the documentation under the [catalyst-ngd-wrappers-aws](https://github.com/Geovation/catalyst-ngd-wrappers-aws) repository.
 
 ### Authentication
