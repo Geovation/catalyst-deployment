@@ -34,7 +34,6 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
     - cloudformation:DeleteStack
     - s3:PutObject
     - s3:DeleteObject
-    - s3:DeleteBucket
     - lambda:InvokeFunction
     - logs:CreateLogGroup
     - logs:CreateLogStream
@@ -44,8 +43,7 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
 2. **CloudFormation Stack**
 
     1. Go to the [CloudFormation console](https://eu-west-2.console.aws.amazon.com/cloudformation), select 'Create stack' > 'With new resources (standard)'.
-    2. Under 'Prerequisite - Prepare template' ensure 'Choose an existing template' is selected.
-    3. Under 'Specify template' select 'Upload a template file' and upload main.yml from the aws directory.
+    2. Under 'Prerequisite - Prepare template', ensure 'Choose an existing template' is selected, and under 'Specify template' select 'Upload a template file' and upload main.yml from the aws directory.
     4. On the 'Specify stack details' step, enter the following parameters:
         - A stack name of your choice
         - If you want automatic internal OS authorisation, set OSDataHubProjectKey and OSDataHubProjectSecret to the corresponding values from your the OS DataHub.
@@ -93,9 +91,9 @@ The two temporary resources list are not used by the final product, but only req
 | NGD Wrappers Methods        | MethodNGD…                          | ApiGateway Method        | API methods to trigger NGD Wrapper endpoints.                        |                                                                  |
 | ONS Geographies Method      | MethodONS                           | ApiGateway Method        | API method to trigger ONS Geographies endpoints.                     |                                                                  |
 | Gateway API Deployment      | ApiGatewayDeployment                | ApiGateway Deployment    | Packaged publication of the API.                                     |                                                                  |
-| Gateway Usage Plan          | UsagePlan                           | ApiGateway Usage Plan    | Usage plan for accessing Gateway API stage. Generated for security only if OS Datahub credentials are supplied as parameters for automatic OS authentication.                          |                                                                  |
-| Gateway API Key             | ApiKey                              | ApiGateway API Key       | An API key associated with the usage plan and Gateway API stage. Generated for security only if OS Datahub credentials are supplied as parameters for automatic OS authentication. |                                                                  |
-| Usage Plan <> Key Association| UsagePlanKey                       | ApiGateway Usage Plan Key| Associates API key with usage plan. Generated for security only if OS Datahub credentials are supplied as parameters for automatic OS authentication.                                  |                                                                  |
+| Gateway Usage Plan          | UsagePlan                           | ApiGateway Usage Plan    | Usage plan for accessing Gateway API stage. Generated for security **only if OS Datahub credentials are supplied** as parameters for automatic OS authentication.                          |                                                                  |
+| Gateway API Key             | ApiKey                              | ApiGateway API Key       | An API key associated with the usage plan and Gateway API stage. Generated for security **only if OS Datahub credentials are supplied** as parameters for automatic OS authentication. |                                                                  |
+| Usage Plan <> Key Association| UsagePlanKey                       | ApiGateway Usage Plan Key| Associates API key with usage plan. Generated for security **only if OS Datahub credentials are supplied** as parameters for automatic OS authentication.                                  |                                                                  |
 
 # Feedback and Feature requests
 
