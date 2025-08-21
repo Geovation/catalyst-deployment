@@ -50,9 +50,9 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
     5. Keep default settings on the 'Configure stack option' page (note the acknowledgement that CloudFormation will create IAM resources), and create the stack.
     6. It should take a few minutes for the Stack to build.
 3. Accessing the API
-- The various resources, including the Lambda Function and the Gateway API, can be viewed under 'Resources'.
+- Links to the various resources, including the Lambda Function and the Gateway API, can be viewed under 'Resources'. If you wish, extra settings (eg. API usage throttling, see below) can be set/changed using these.
 - Under 'Outputs', the apiGatewayInvokeURL value provides the base URL which can be used to access the various endpoints.
-- For use the API, please see the documentation under the [catalyst-ngd-wrappers-aws](https://github.com/Geovation/catalyst-ngd-wrappers-aws) repository.
+- For use of the API, please see the documentation under the [catalyst-ngd-wrappers-aws](https://github.com/Geovation/catalyst-ngd-wrappers-aws) repository.
 
 ### Stack Deletion
 Deleting a stack automatically deletes all associated resources.
