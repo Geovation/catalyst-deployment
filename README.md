@@ -66,6 +66,7 @@ Both API Gateway and OS DataHub authorisation must be configured for use of the 
 - If you supply OSDataHubProjectKey and OSDataHubProjectSecret in setup, API Gateway key authorisation is automatically enabled, and a key and usage plan generated (see below)
     - You can find the key under "API Keys" on the API Gateway console.
     - This key must be passed to all API requests as the [X-API-Key header](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-key-source.html).
+    - By default, there is no throttling or quotas to the usage plan. To add these, access the plan through the [API Gateway console](https://eu-west-2.console.aws.amazon.com/apigateway), find your plan under 'Usage plans', select 'Actions'>'Edit usage plan', and configure these settings.
 
 ### Resources Overview
 
