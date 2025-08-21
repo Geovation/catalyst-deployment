@@ -26,7 +26,8 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
 
 ### Instructions
 
-1. Permissions
+1. **Permissions**
+
 - You will require the following AWS perissions:
     - cloudformation:CreateStack
     - cloudformation:UpdateStack
@@ -39,7 +40,9 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
     - logs:CreateLogStream
     - logs:PutLogEvents
 - You will also need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
-2. CloudFormation Stack
+
+2. **CloudFormation Stack**
+
     1. Go to the [CloudFormation console](https://eu-west-2.console.aws.amazon.com/cloudformation), select 'Create stack' > 'With new resources (standard)'.
     2. Under 'Prerequisite - Prepare template' ensure 'Choose an existing template' is selected.
     3. Under 'Specify template' select 'Upload a template file' and upload main.yml from the aws directory.
@@ -49,17 +52,15 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
         - If desired, modify the ApiGatewayStageName and other parameters from the defaults.
     5. Keep default settings on the 'Configure stack option' page (note the acknowledgement that CloudFormation will create IAM resources), and create the stack.
     6. It should take a few minutes for the Stack to build.
-3. Accessing the API
+
+3. **Accessing the API**
+
 - Links to the various resources, including the Lambda Function and the Gateway API, can be viewed under 'Resources'. If you wish, extra settings (eg. API usage throttling, see below) can be set/changed using these.
 - Under 'Outputs', the apiGatewayInvokeURL value provides the base URL which can be used to access the various endpoints.
 - For use of the API, please see the documentation under the [catalyst-ngd-wrappers-aws](https://github.com/Geovation/catalyst-ngd-wrappers-aws) repository.
 
-### Stack Deletion
-Deleting a stack automatically deletes all associated resources.
-
-However, if you choose to delete a stack, you must **first manually empty the S3 bucket**, as only empty buckets can be deleted automatically. This can be done through the [S3 console](https://eu-west-2.console.aws.amazon.com/s3).
-
 ### Authentication
+
 Both API Gateway and OS DataHub authorisation must be configured for use of the API.
 - If OSDataHubProjectKey and OSDataHubProjectSecret are left blank in setup, then the Gateway API is left unauthorised, allowing open access to the endpoints.
     - You can add authorisation manually if you wish: for example, by creating a Usage Plan and API key on the [API Gateway console](https://eu-west-2.console.aws.amazon.com/apigateway).
@@ -67,6 +68,12 @@ Both API Gateway and OS DataHub authorisation must be configured for use of the 
     - You can find the key under "API Keys" on the API Gateway console.
     - This key must be passed to all API requests as the [X-API-Key header](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-key-source.html).
     - By default, there is no throttling or quotas to the usage plan. To add these, access the plan through the [API Gateway console](https://eu-west-2.console.aws.amazon.com/apigateway), find your plan under 'Usage plans', select 'Actions'>'Edit usage plan', and configure these settings.
+
+### Stack Deletion
+
+Deleting a stack automatically deletes all associated resources.
+
+However, if you choose to delete a stack, you must **first manually empty the S3 bucket**, as only empty buckets can be deleted automatically. This can be done through the [S3 console](https://eu-west-2.console.aws.amazon.com/s3).
 
 ### Resources Overview
 
