@@ -68,13 +68,18 @@ Parameters:
     AllowedPattern: "[a-z0-9][a-z0-9-]*[a-z0-9]"
     Description: The name of the S3 bucket to store Lambda code
     Default: catalyst-data-store
-  ApiKeyRequired:
+  ApiKeyName:
     Type: String
-    Default: false
-    AllowedValues:
-      - true
-      - false
-    Description: Whether the API Gateway methods require an API key. Either 'true' or 'false'.
+    MinLength: "1"
+    MaxLength: "128"
+    AllowedPattern: '[\w+=,.@-]+'
+    Default: CatalystApiKey
+    Description: The name of the API key to be created for the API Gateway usage plan. Only generated if DataHub credentials are supplied.
+
+Conditions:
+  ApiKeyRequired: !Or
+    - !Not [!Equals [!Ref OSDataHubProjectKey, ""]]
+    - !Not [!Equals [!Ref OSDataHubProjectSecret, ""]]
 
 Resources:
 
@@ -554,7 +559,7 @@ Resources:
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt ONSGeographiesLambdaFunction.Arn
 
-  # === API Gateway Deployment ===
+  # === API Gateway Deployment and Authentication ===
 
   ApiGatewayDeployment:
     Type: AWS::ApiGateway::Deployment
@@ -569,6 +574,30 @@ Resources:
       StageName: !Ref ApiGatewayStageName
       Description: 'CatalyST API Gateway Deployment'
 
+  UsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    DependsOn: ApiGatewayDeployment
+    Properties:
+      Description: Usage plan for the Catalyst API
+      ApiStages:
+        - ApiId: !Ref Api
+          Stage: !Ref ApiGatewayStageName
+      UsagePlanName: "My Usage Plan"
+
+  ApiKey:
+    Type: AWS::ApiGateway::ApiKey
+    Properties: 
+      Description: API Key
+      Name: !Ref ApiKeyName
+      Enabled: True
+
+  UsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !Ref ApiKey
+      KeyType: API_KEY
+      UsagePlanId: !Ref UsagePlan
+
 Outputs:
   apiGatewayInvokeURL:
     Value: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiGatewayStageName}/
@@ -577,7 +606,7 @@ Outputs:
   NGDWrapperLambdaFunctionArn:
     Value: !GetAtt NGDWrapperLambdaFunction.Arn
     Description: The ARN of the Lambda function
-  
+
   ONSGeographiesLambdaFunctionArn:
     Value: !GetAtt ONSGeographiesLambdaFunction.Arn
     Description: The ARN of the ONS Geographies Lambda function
