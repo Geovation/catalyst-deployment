@@ -28,7 +28,7 @@ var ngdWrapperFunctionName = '${ngdWrapperName}-function'
 var ngdWrapperStoreName = replace(toLower('${ngdWrapperName}store'), '-', '')
 var ngdWrapperInsightsName = '${ngdWrapperName}-insights'
 // THE BELOW NEEDS TO BE SET TO LATEST
-var ngdWrapperFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/release.zip'
+var ngdWrapperFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/azure_function_release.zip'
 
 // VARIOUS RESOURCES
 // Log Analytics Workspace x1
