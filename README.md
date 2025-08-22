@@ -20,6 +20,19 @@ Using these resources, you can get a **working API up and running in minutes** w
 
 Azure deployment has been written using [Azure Resource Manager (ARM)](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/overview) templates.
 
+### Instructions, VS-Code Deployment
+
+#### 1. **Install Bicep Extension**
+
+Navigate to VS-Code extensions, and install the extension called 'Bicep' from Microsoft.
+
+#### 2. **Deploy**
+
+-   On the 'explorer' panel, right-click on the bicep file, and select 'Show Deployment Pane'. You may be asked to allow Bicep access and sign-in to Microsoft.
+-   In the deployment pane, under Deployment Scope, select the scription and the Resource Group you would like to deploy with.
+-   Under 'parameters', either change resources to your desired name, or leave as default.
+-   Select 'deploy' and wait for resources to deploy. They should become accessible through the Resource group on the Azure portal.
+
 ## AWS
 
 AWS deployment has been written using [CloudFormation templates](https://aws.amazon.com/cloudformation/resources/templates/).

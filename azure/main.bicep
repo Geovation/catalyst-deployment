@@ -18,14 +18,14 @@ var logAnalyticsName = toLower('${workspaceName}-log-analytics')
 // SETTING VARIOUS HIGHER LEVEL PARAMS
 var onsGeographiesServicePlanName = '${onsGeographiesName}-serviceplan'
 var onsGeographiesFunctionName = '${onsGeographiesName}-function'
-var onsGeographiesStoreName = replace(toLower('${onsGeographiesName}store'), '-', '')
+var onsGeographiesStoreName = replace(toLower('${onsGeographiesName}store2'), '-', '')
 var onsGeographiesInsightsName = '${onsGeographiesName}-insights'
 // THE BELOW NEEDS TO BE SET TO LATEST
 var onsGeographiesFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ons-geographies-azure/releases/latest/download/azure_function_release.zip'
 
 var ngdWrapperServicePlanName = '${ngdWrapperName}-serviceplan'
 var ngdWrapperFunctionName = '${ngdWrapperName}-function'
-var ngdWrapperStoreName = replace(toLower('${ngdWrapperName}store'), '-', '')
+var ngdWrapperStoreName = replace(toLower('${ngdWrapperName}store2'), '-', '')
 var ngdWrapperInsightsName = '${ngdWrapperName}-insights'
 // THE BELOW NEEDS TO BE SET TO LATEST
 var ngdWrapperFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/azure_function_release.zip'
