@@ -12,6 +12,12 @@ param onsGeographiesName string = 'ons-geographies'
 @description('Name of the NGD Wrapper Function resources')
 param ngdWrapperName string = 'ngd-wrapper'
 
+@description('OS DataHub Project API Key - used by NGD Wrapper function')
+param osDataHubProjectApiKey string = ''
+
+@description('OS DataHub Project Secret - used by NGD Wrapper function')
+param osDataHubProjectSecret string = ''
+
 // FOR LOGGING
 var logAnalyticsName = toLower('${workspaceName}-log-analytics')
 
@@ -20,14 +26,12 @@ var onsGeographiesServicePlanName = '${onsGeographiesName}-serviceplan'
 var onsGeographiesFunctionName = '${onsGeographiesName}-function'
 var onsGeographiesStoreName = replace(toLower('${onsGeographiesName}store2'), '-', '')
 var onsGeographiesInsightsName = '${onsGeographiesName}-insights'
-// THE BELOW NEEDS TO BE SET TO LATEST
 var onsGeographiesFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ons-geographies-azure/releases/latest/download/azure_function_release.zip'
 
 var ngdWrapperServicePlanName = '${ngdWrapperName}-serviceplan'
 var ngdWrapperFunctionName = '${ngdWrapperName}-function'
 var ngdWrapperStoreName = replace(toLower('${ngdWrapperName}store2'), '-', '')
 var ngdWrapperInsightsName = '${ngdWrapperName}-insights'
-// THE BELOW NEEDS TO BE SET TO LATEST
 var ngdWrapperFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/azure_function_release.zip'
 
 // VARIOUS RESOURCES
@@ -139,8 +143,16 @@ resource ngdWrapperFunctionApp 'Microsoft.Web/sites@2024-04-01' = {
     reserved: true
     siteConfig: {
       numberOfWorkers: 1
-      linuxFxVersion: 'PYTHON|3.11'
+      linuxFxVersion: 'PYTHON|3.13'
       appSettings: [
+        {
+          name: 'OS_DATAHUB_PROJECT_API_KEY'
+          value: osDataHubProjectApiKey
+        }
+        {
+          name: 'OS_DATAHUB_PROJECT_SECRET'
+          value: osDataHubProjectSecret
+        }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
           value: reference(resourceId('Microsoft.Insights/components', ngdWrapperInsightsName), '2015-05-01').InstrumentationKey
@@ -183,7 +195,7 @@ resource onsGeographiesFunctionApp 'Microsoft.Web/sites@2024-04-01' = {
     reserved: true
     siteConfig: {
       numberOfWorkers: 1
-      linuxFxVersion: 'PYTHON|3.11'
+      linuxFxVersion: 'PYTHON|3.13'
       appSettings: [
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
