@@ -46,8 +46,10 @@ You will also need to create a project on the [OS DataHub](https://osdatahub.os.
 The code below can run either locally, or through a Cloud Shell terminal on the Azure portral, accessible through the Cloud Shell icon (`>_`) in the header panel at the top right of the page.
 
 - If you use a local terminal, you must first login with `az login`, and entering a number from the listed subscriptions.
-- If you use the Cloud Shell terminal, you must first select 'Manage files'>'Upload' and upload the .bicep code (_path/to/main.bicep_ then becomes _main.bicep_).
+- If you use the Cloud Shell terminal, you must first select 'Manage files'>'Upload' and upload the .bicep code (it is uploaded to the base directory, so _path/to/main.bicep_ is _main.bicep_).
 - The parameters below show how OS authentication can be configured, as well as optional changes to _onsGeographiesName_ and _ngdWrapperName_ from their defaults.
+- Either the bicep or the json file can be used.
+- The other parameters which can be set are _workspaceName_ and _location_.
 
 ```
 az deployment group create
@@ -87,7 +89,7 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
     - logs:PutLogEvents
 - You will also need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
 
-#### 2. **CloudFormation Stack**
+### Instructions, CloudFormation Console
 
 1. Go to the [CloudFormation console](https://eu-west-2.console.aws.amazon.com/cloudformation), select 'Create stack' > 'With new resources (standard)'.
 2. Under 'Prerequisite - Prepare template', ensure 'Choose an existing template' is selected, and under 'Specify template' select 'Upload a template file' and upload main.yml from the aws directory.
@@ -98,10 +100,15 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
 5. Keep default settings on the 'Configure stack option' page (note the acknowledgement that CloudFormation will create IAM resources), and create the stack.
 6. It should take a few minutes for the Stack to build.
 
-#### **_CLI Alternative Method_**
+### Instructions, AWS CLI
 
-Below is a demonstration of how the AWS CLI could be used as an alternative to the CloudFormation interface.
-Find further details and parameters [here](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html).
+- Find further details and parameters [here](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html).
+- In addition to the three example parameters given below, other parameters can be modified from their defaults:
+    - NGDWrapperLambdaFunctionName
+    - ONSGeographiesLambdaFunctionName
+    - ApiGatewayStageName
+    - S3BucketName
+    - ONSGeographyDBFilePath
 
 ```
 aws configure
@@ -115,7 +122,7 @@ aws cloudformation create-stack
     --template-body file://path/to/main.yml
     --capabilities CAPABILITY_NAMED_IAM
     --parameters
-        ParameterKey=ApiKeyName,ParameterValue=CustomApiKeyName
+        ParameterKey=ApiKeyName,ParameterValue=<your-custom-api-key-name>
         ParameterKey=OSDataHubProjectKey,ParameterValue=<your-datahub-key>
         ParameterKey=OSDataHubProjectSecret,ParameterValue=<your-datahub-secret>
 ```
