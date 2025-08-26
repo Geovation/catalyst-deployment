@@ -28,7 +28,7 @@ You will also need to create a project on the [OS DataHub](https://osdatahub.os.
 
 [Further information](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/quickstart-create-templates-use-the-portal)
 
-- Go to the ('Deploy a custom template' resource)[https://portal.azure.com/#create/Microsoft.Template] on the Azure portal.
+- Go to the ['Deploy a custom template' resource](https://portal.azure.com/#create/Microsoft.Template) on the Azure portal.
 - Select 'Build your own template in the editor' > 'Load file', select the main.json template (the bicep file is not compatable with the custom template builder), and 'Save'.
 - Select your subscription and desired Resource Group and Instance region.
 - If you want internal authentication handling, add your OS DataHub Project Key and Secret to the Instance details.
@@ -70,7 +70,7 @@ az deployment group create
 
 ### Calling the API
 
-- Links to the various resources, including the Lambda Function and the Gateway API, can be viewed by selecting the Resource Group from the (Resource Groups service)[https://portal.azure.com/#browse/resourcegroups].
+- Links to the various resources, including the Lambda Function and the Gateway API, can be viewed by selecting the Resource Group from the [Resource Groups service](https://portal.azure.com/#browse/resourcegroups).
 - In the left panel, under 'Settings' > 'deployments', you can select the deployment and view deployment details.
 - From the deployment overview, in the left panel, under 'Outputs', you can view names of resources, as well as the root URLs for the two APIs.
 - For use of the API, please see the documentation under the [catalyst-ngd-wrappers-azure](https://github.com/Geovation/catalyst-ngd-wrappers-azure) repository.
