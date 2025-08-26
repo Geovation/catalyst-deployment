@@ -13,26 +13,28 @@ param onsGeographiesName string = 'ons-geographies'
 param ngdWrapperName string = 'ngd-wrapper'
 
 @description('OS DataHub Project API Key - used by NGD Wrapper function')
+@secure()
 param osDataHubProjectApiKey string = ''
 
 @description('OS DataHub Project Secret - used by NGD Wrapper function')
+@secure()
 param osDataHubProjectSecret string = ''
 
 // FOR LOGGING
-var logAnalyticsName = toLower('${workspaceName}-log-analytics')
+var logAnalyticsName = toLower('${workspaceName}-log-analytics-t')
 
 // SETTING VARIOUS HIGHER LEVEL PARAMS
 var onsGeographiesServicePlanName = '${onsGeographiesName}-serviceplan'
 var onsGeographiesFunctionName = '${onsGeographiesName}-function'
-var onsGeographiesStoreName = replace(toLower('${onsGeographiesName}store2'), '-', '')
+var onsGeographiesStoreName = replace(toLower('${onsGeographiesName}store'), '-', '')
 var onsGeographiesInsightsName = '${onsGeographiesName}-insights'
-var onsGeographiesFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ons-geographies-azure/releases/latest/download/azure_function_release.zip'
+var onsGeographiesFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ons-geographies-azure/releases/latest/download/azure_function_release_.zip'
 
 var ngdWrapperServicePlanName = '${ngdWrapperName}-serviceplan'
 var ngdWrapperFunctionName = '${ngdWrapperName}-function'
-var ngdWrapperStoreName = replace(toLower('${ngdWrapperName}store2'), '-', '')
+var ngdWrapperStoreName = replace(toLower('${ngdWrapperName}store'), '-', '')
 var ngdWrapperInsightsName = '${ngdWrapperName}-insights'
-var ngdWrapperFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/azure_function_release.zip'
+var ngdWrapperFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/azure_function_release_.zip'
 
 // VARIOUS RESOURCES
 // Log Analytics Workspace x1
@@ -136,6 +138,9 @@ resource onsGeographiesAppInsights 'microsoft.insights/components@2020-02-02' = 
 
 resource ngdWrapperFunctionApp 'Microsoft.Web/sites@2024-04-01' = {
   name: ngdWrapperFunctionName
+  dependsOn: [
+    ngdWrapperAppInsights
+  ]
   location: location
   kind: 'functionapp,linux'
   properties: {
@@ -146,7 +151,7 @@ resource ngdWrapperFunctionApp 'Microsoft.Web/sites@2024-04-01' = {
       linuxFxVersion: 'PYTHON|3.13'
       appSettings: [
         {
-          name: 'OS_DATAHUB_PROJECT_API_KEY'
+          name: 'CLIENT_ID'
           value: osDataHubProjectApiKey
         }
         {
@@ -241,9 +246,29 @@ resource ngdWrapperZipDeploy 'Microsoft.Web/sites/extensions@2022-03-01' = {
 
 resource onsGeographiesZipDeploy 'Microsoft.Web/sites/extensions@2022-03-01' = {
   parent: onsGeographiesFunctionApp
+  dependsOn: [
+    ngdWrapperZipDeploy
+  ]
   name: any('zipdeploy')
   location: location
   properties: {
     packageUri: onsGeographiesFunctionsPackageUri
   }
 }
+
+// description('Outputs the Function App URL for the ONS Geographies function')
+// output onsGeographiesFunctionAppUrl string = onsGeographiesFunctionApp.defaultHostName
+// @description('Outputs the Function App URL for the NGD Wrapper function')
+// output ngdWrapperFunctionAppUrl string = ngdWrapperFunctionApp.defaultHostName
+@description('Outputs the Log Analytics Workspace ID')
+output logAnalyticsWorkspaceId string = logAnalyticsWorkspace.id
+@description('Outputs the Log Analytics Workspace Name')
+output logAnalyticsWorkspaceName string = logAnalyticsWorkspace.name
+@description('Outputs the NGD Wrapper Storage Account Name')
+output ngdWrapperStorageAccountName string = ngdWrapperStorage.name
+@description('Outputs the ONS Geographies Storage Account Name')
+output onsGeographiesStorageAccountName string = onsGeographiesStorage.name
+@description('Outputs the NGD Wrapper Application Insights Name')
+output ngdWrapperAppInsightsName string = ngdWrapperAppInsights.name
+@description('Outputs the ONS Geographies Application Insights Name')
+output onsGeographiesAppInsightsName string = onsGeographiesAppInsights.name

@@ -20,7 +20,7 @@ Using these resources, you can get a **working API up and running in minutes** w
 
 Azure deployment has been written using [Azure Resource Manager (ARM)](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/overview) templates.
 
-### Instructions, VS-Code Deployment
+### Instructions, VS-Code Deployment ((more info)[https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-vscode])
 
 #### 1. **Install Bicep Extension**
 
@@ -28,10 +28,34 @@ Navigate to VS-Code extensions, and install the extension called 'Bicep' from Mi
 
 #### 2. **Deploy**
 
--   On the 'explorer' panel, right-click on the bicep file, and select 'Show Deployment Pane'. You may be asked to allow Bicep access and sign-in to Microsoft.
--   In the deployment pane, under Deployment Scope, select the scription and the Resource Group you would like to deploy with.
--   Under 'parameters', either change resources to your desired name, or leave as default.
--   Select 'deploy' and wait for resources to deploy. They should become accessible through the Resource group on the Azure portal.
+- On the 'explorer' panel, right-click on the bicep file, and select 'Show Deployment Pane'. You may be asked to allow Bicep access and sign-in to Microsoft.
+- In the deployment pane, under Deployment Scope, select the scription and the Resource Group you would like to deploy with.
+- Under 'parameters', either change resources to your desired name, or leave as default.
+- Select 'deploy' and wait for resources to deploy. They should become accessible through the Resource group on the Azure portal.
+
+### Instructions, Azure CLI Deployment ((more info)[https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-cli])
+
+The code below can run either locally, or through a Cloud Shell terminal on the Azure portral, accessible through the Cloud Shell icon (`>_`) in the header panel at the top right of the page.
+
+- If you use a local terminal, you must first login with `az login`, and entering a number from the listed subscriptions.
+- If you use the Cloud Shell terminal, you must first select 'Manage files'>'Upload' and upload the .bicep code (_path/to/main.bicep_ then becomes _main.bicep_).
+
+```
+az deployment group create
+    --resource-group <your-resource-group>
+    --template-file path/to/main.bicep
+    --parameters
+        onsGeographiesName=ons-geographies
+        ngdWrapperName=ngd-wrapper
+        osDataHubProjectApiKey=<your-datahub-key>
+        osDataHubProjectSecret=<your-datahub-secret>
+```
+
+It may take several minutes to deploy.
+
+### Calling the API
+
+
 
 ## AWS
 
@@ -86,7 +110,7 @@ aws cloudformation create-stack
         ParameterKey=OSDataHubProjectSecret,ParameterValue=<your-datahub-secret>
 ```
 
-#### 3. **Accessing the API**
+#### 3. **Calling the API**
 
 - Links to the various resources, including the Lambda Function and the Gateway API, can be viewed under 'Resources'. If you wish, extra settings (eg. API usage throttling, see below) can be set/changed using these.
 - Under 'Outputs', the apiGatewayInvokeURL value provides the root URL which can be used to access the various endpoints.
