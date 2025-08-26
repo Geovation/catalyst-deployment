@@ -11,8 +11,8 @@ The code which this repository deploys is available at four [Geovation repositor
 
 This repository contains resources to deploy the Catalyst API tools to cloud services, including:
 
-- Azure
-- AWS
+- Microsoft Azure
+- Amazon Web Services (AWS)
 
 Using these resources, you can get a **working API up and running in minutes** with minimal manual configuration.
 
@@ -69,13 +69,18 @@ az deployment group create
 - From the deployment overview, in the left panel, under 'Outputs', you can view names of resources, as well as the root URLs for the two APIs.
 - For use of the API, please see the documentation under the [catalyst-ngd-wrappers-azure](https://github.com/Geovation/catalyst-ngd-wrappers-azure) repository.
 
+### Authentication
+**TODO**
+
+### Deployment Deletion
+
+Deleting a template deployment does **not** delete the associated resources in the resource group. You must delete these separately.
+
 ## AWS
 
 AWS deployment has been written using [CloudFormation templates](https://aws.amazon.com/cloudformation/resources/templates/).
 
-### Instructions
-
-#### 1. **Permissions**
+### Permissions
 
 - You will require the following AWS perissions:
     - cloudformation:CreateStack
@@ -127,7 +132,7 @@ aws cloudformation create-stack
         ParameterKey=OSDataHubProjectSecret,ParameterValue=<your-datahub-secret>
 ```
 
-#### 3. **Calling the API**
+### Calling the API
 
 - Links to the various resources, including the Lambda Function and the Gateway API, can be viewed under 'Resources'. If you wish, extra settings (eg. API usage throttling, see below) can be set/changed using these.
 - Under 'Outputs', the apiGatewayInvokeURL value provides the root URL which can be used to access the various endpoints.
