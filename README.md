@@ -100,7 +100,7 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
     - logs:PutLogEvents
 - You will also need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
 
-### Instructions, CloudFormation Console
+### Instructions, CloudFormation Console
 
 1. Go to the [CloudFormation console](https://eu-west-2.console.aws.amazon.com/cloudformation), select 'Create stack' > 'With new resources (standard)'.
 2. Under 'Prerequisite - Prepare template', ensure 'Choose an existing template' is selected, and under 'Specify template' select 'Upload a template file' and upload main.yml from the aws directory.
@@ -111,7 +111,7 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
 5. Keep default settings on the 'Configure stack option' page (note the acknowledgement that CloudFormation will create IAM resources), and create the stack.
 6. It should take a few minutes for the Stack to build.
 
-### Instructions, AWS CLI
+### Instructions, AWS CLI
 
 - Find further details and parameters [here](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html).
 - In addition to the three example parameters given below, other parameters can be modified from their defaults:
@@ -123,10 +123,10 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
 
 ```
 aws configure
-    AWS Access Key ID [None]: <your-access-key-id>
-    AWS Secret Access Key [None]: <your-secret-access-key>
-    Default region name [None]: eu-west-2
-    Default output format [None]: json
+>>> AWS Access Key ID [None]: <your-access-key-id>
+>>> AWS Secret Access Key [None]: <your-secret-access-key>
+>>> Default region name [None]: eu-west-2
+>>> Default output format [None]: json
 
 aws cloudformation create-stack
     --stack-name catalyst-deployment
