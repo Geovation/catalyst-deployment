@@ -24,7 +24,7 @@ Azure deployment has been written using [Azure Resource Manager (ARM)](https://l
 
 You will also need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
 
-### Instructions, Azure Portal
+### Instructions, (Azure Portal)[https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/quickstart-create-templates-use-the-portal]
 
 - Go to the ('Deploy a custom template' resource)[https://portal.azure.com/#create/Microsoft.Template] on the Azure portal.
 - Select 'Build your own template in the editor' > 'Load file', select the main.json template (the bicep file is not compatable with the custom template builder), and 'Save'.
@@ -33,7 +33,7 @@ You will also need to create a project on the [OS DataHub](https://osdatahub.os.
 - If you wish, change any of the other Instance details from their defaults.
 - Select 'Review + create' > 'Create'.
 
-### Instructions, VS-Code Deployment ((more info)[https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-vscode])
+### Instructions, (VS-Code Deployment)[https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-vscode]
 
 - Navigate to VS-Code extensions, and install the extension called 'Bicep' from Microsoft.
 - On the 'explorer' panel, right-click on the bicep file, and select 'Show Deployment Pane'. You may be asked to allow Bicep access and sign-in to Microsoft.
@@ -41,7 +41,7 @@ You will also need to create a project on the [OS DataHub](https://osdatahub.os.
 - Under 'parameters', either change resources to your desired name, or leave as default.
 - Select 'deploy' and wait for resources to deploy. They should become accessible through the Resource group on the Azure portal.
 
-### Instructions, Azure CLI Deployment ((more info)[https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-cli])
+### Instructions, (Azure CLI Deployment)[https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-cli]
 
 The code below can run either locally, or through a Cloud Shell terminal on the Azure portral, accessible through the Cloud Shell icon (`>_`) in the header panel at the top right of the page.
 
