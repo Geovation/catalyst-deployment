@@ -1,0 +1,351 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.37.4.10188",
+      "templateHash": "17341775329966356493"
+    }
+  },
+  "parameters": {
+    "workspaceName": {
+      "type": "string",
+      "defaultValue": "catalyst",
+      "metadata": {
+        "description": "Name of the workspace - this name will be used in resources"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "UK West",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "onsGeographiesName": {
+      "type": "string",
+      "defaultValue": "ons-geographies",
+      "metadata": {
+        "description": "Name of the ONS Geographies resources"
+      }
+    },
+    "ngdWrapperName": {
+      "type": "string",
+      "defaultValue": "ngd-wrapper",
+      "metadata": {
+        "description": "Name of the NGD Wrapper Function resources"
+      }
+    },
+    "osDataHubProjectApiKey": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "OS DataHub Project API Key - used by NGD Wrapper function"
+      }
+    },
+    "osDataHubProjectSecret": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "OS DataHub Project Secret - used by NGD Wrapper function"
+      }
+    }
+  },
+  "variables": {
+    "logAnalyticsName": "[toLower(format('{0}-log-analytics-t', parameters('workspaceName')))]",
+    "onsGeographiesServicePlanName": "[format('{0}-serviceplan', parameters('onsGeographiesName'))]",
+    "onsGeographiesFunctionName": "[format('{0}-function', parameters('onsGeographiesName'))]",
+    "onsGeographiesStoreName": "[replace(toLower(format('{0}store', parameters('onsGeographiesName'))), '-', '')]",
+    "onsGeographiesInsightsName": "[format('{0}-insights', parameters('onsGeographiesName'))]",
+    "onsGeographiesFunctionsPackageUri": "https://github.com/Geovation/catalyst-ons-geographies-azure/releases/latest/download/azure_function_release_.zip",
+    "ngdWrapperServicePlanName": "[format('{0}-serviceplan', parameters('ngdWrapperName'))]",
+    "ngdWrapperFunctionName": "[format('{0}-function', parameters('ngdWrapperName'))]",
+    "ngdWrapperStoreName": "[replace(toLower(format('{0}store', parameters('ngdWrapperName'))), '-', '')]",
+    "ngdWrapperInsightsName": "[format('{0}-insights', parameters('ngdWrapperName'))]",
+    "ngdWrapperFunctionsPackageUri": "https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/azure_function_release_.zip"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2025-02-01",
+      "name": "[variables('logAnalyticsName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "pergb2018"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2024-01-01",
+      "name": "[variables('ngdWrapperStoreName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage"
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2024-01-01",
+      "name": "[variables('onsGeographiesStoreName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage"
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2024-04-01",
+      "name": "[variables('onsGeographiesServicePlanName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic",
+        "size": "Y1",
+        "family": "Y",
+        "capacity": 0
+      },
+      "kind": "functionapp",
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2024-04-01",
+      "name": "[variables('ngdWrapperServicePlanName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic",
+        "size": "Y1",
+        "family": "Y",
+        "capacity": 0
+      },
+      "kind": "functionapp",
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[variables('ngdWrapperInsightsName')]",
+      "location": "[parameters('location')]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web",
+        "Flow_Type": "Redfield",
+        "Request_Source": "IbizaAIExtensionEnablementBlade",
+        "RetentionInDays": 90,
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]",
+        "IngestionMode": "LogAnalytics",
+        "publicNetworkAccessForIngestion": "Enabled",
+        "publicNetworkAccessForQuery": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[variables('onsGeographiesInsightsName')]",
+      "location": "[parameters('location')]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web",
+        "Flow_Type": "Redfield",
+        "Request_Source": "IbizaAIExtensionEnablementBlade",
+        "RetentionInDays": 90,
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]",
+        "IngestionMode": "LogAnalytics",
+        "publicNetworkAccessForIngestion": "Enabled",
+        "publicNetworkAccessForQuery": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2024-04-01",
+      "name": "[variables('ngdWrapperFunctionName')]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp,linux",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('ngdWrapperServicePlanName'))]",
+        "reserved": true,
+        "siteConfig": {
+          "numberOfWorkers": 1,
+          "linuxFxVersion": "PYTHON|3.13",
+          "appSettings": [
+            {
+              "name": "CLIENT_ID",
+              "value": "[parameters('osDataHubProjectApiKey')]"
+            },
+            {
+              "name": "OS_DATAHUB_PROJECT_SECRET",
+              "value": "[parameters('osDataHubProjectSecret')]"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('ngdWrapperInsightsName')), '2015-05-01').InstrumentationKey]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('ngdWrapperStoreName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('ngdWrapperStoreName')), '2024-01-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('ngdWrapperStoreName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('ngdWrapperStoreName')), '2024-01-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower(variables('ngdWrapperFunctionName'))]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "python"
+            },
+            {
+              "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', variables('ngdWrapperInsightsName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', variables('ngdWrapperServicePlanName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('ngdWrapperStoreName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2024-04-01",
+      "name": "[variables('onsGeographiesFunctionName')]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp,linux",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('onsGeographiesServicePlanName'))]",
+        "reserved": true,
+        "siteConfig": {
+          "numberOfWorkers": 1,
+          "linuxFxVersion": "PYTHON|3.13",
+          "appSettings": [
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('onsGeographiesInsightsName')), '2015-05-01').InstrumentationKey]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('onsGeographiesStoreName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('onsGeographiesStoreName')), '2024-01-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('onsGeographiesStoreName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('onsGeographiesStoreName')), '2024-01-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower(variables('onsGeographiesFunctionName'))]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "python"
+            },
+            {
+              "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('onsGeographiesServicePlanName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('onsGeographiesStoreName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/extensions",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}', variables('ngdWrapperFunctionName'), 'zipdeploy')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "packageUri": "[variables('ngdWrapperFunctionsPackageUri')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('ngdWrapperFunctionName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/extensions",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}', variables('onsGeographiesFunctionName'), 'zipdeploy')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "packageUri": "[variables('onsGeographiesFunctionsPackageUri')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites/extensions', variables('ngdWrapperFunctionName'), 'zipdeploy')]",
+        "[resourceId('Microsoft.Web/sites', variables('onsGeographiesFunctionName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "logAnalyticsWorkspaceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Outputs the Log Analytics Workspace ID"
+      },
+      "value": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
+    },
+    "logAnalyticsWorkspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Outputs the Log Analytics Workspace Name"
+      },
+      "value": "[variables('logAnalyticsName')]"
+    },
+    "ngdWrapperStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Outputs the NGD Wrapper Storage Account Name"
+      },
+      "value": "[variables('ngdWrapperStoreName')]"
+    },
+    "onsGeographiesStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Outputs the ONS Geographies Storage Account Name"
+      },
+      "value": "[variables('onsGeographiesStoreName')]"
+    },
+    "ngdWrapperAppInsightsName": {
+      "type": "string",
+      "metadata": {
+        "description": "Outputs the NGD Wrapper Application Insights Name"
+      },
+      "value": "[variables('ngdWrapperInsightsName')]"
+    },
+    "onsGeographiesAppInsightsName": {
+      "type": "string",
+      "metadata": {
+        "description": "Outputs the ONS Geographies Application Insights Name"
+      },
+      "value": "[variables('onsGeographiesInsightsName')]"
+    }
+  }
+}
