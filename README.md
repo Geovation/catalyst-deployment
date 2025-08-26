@@ -20,6 +20,12 @@ Using these resources, you can get a **working API up and running in minutes** w
 
 Azure deployment has been written using [Azure Resource Manager (ARM)](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/overview) templates.
 
+### Instructions, Azure Portal
+
+#### 1. Setup
+
+- Go to the ('Deploy a custom template' resource)[https://portal.azure.com/#create/Microsoft.Template] on the Azure portal.
+
 ### Instructions, VS-Code Deployment ((more info)[https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-vscode])
 
 #### 1. **Install Bicep Extension**
