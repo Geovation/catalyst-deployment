@@ -138,9 +138,6 @@ resource onsGeographiesAppInsights 'microsoft.insights/components@2020-02-02' = 
 
 resource ngdWrapperFunctionApp 'Microsoft.Web/sites@2024-04-01' = {
   name: ngdWrapperFunctionName
-  dependsOn: [
-    ngdWrapperAppInsights
-  ]
   location: location
   kind: 'functionapp,linux'
   properties: {
@@ -246,9 +243,6 @@ resource ngdWrapperZipDeploy 'Microsoft.Web/sites/extensions@2022-03-01' = {
 
 resource onsGeographiesZipDeploy 'Microsoft.Web/sites/extensions@2022-03-01' = {
   parent: onsGeographiesFunctionApp
-  dependsOn: [
-    ngdWrapperZipDeploy
-  ]
   name: any('zipdeploy')
   location: location
   properties: {
@@ -256,10 +250,10 @@ resource onsGeographiesZipDeploy 'Microsoft.Web/sites/extensions@2022-03-01' = {
   }
 }
 
-// description('Outputs the Function App URL for the ONS Geographies function')
-// output onsGeographiesFunctionAppUrl string = onsGeographiesFunctionApp.defaultHostName
-// @description('Outputs the Function App URL for the NGD Wrapper function')
-// output ngdWrapperFunctionAppUrl string = ngdWrapperFunctionApp.defaultHostName
+description('Outputs the Function App URL for the ONS Geographies function')
+output onsGeographiesFunctionAppUrl string = onsGeographiesFunctionApp.defaultHostName
+@description('Outputs the Function App URL for the NGD Wrapper function')
+output ngdWrapperFunctionAppUrl string = ngdWrapperFunctionApp.defaultHostName
 @description('Outputs the Log Analytics Workspace ID')
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspace.id
 @description('Outputs the Log Analytics Workspace Name')
