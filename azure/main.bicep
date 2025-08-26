@@ -250,10 +250,10 @@ resource onsGeographiesZipDeploy 'Microsoft.Web/sites/extensions@2022-03-01' = {
   }
 }
 
-description('Outputs the Function App URL for the ONS Geographies function')
-output onsGeographiesFunctionAppUrl string = onsGeographiesFunctionApp.defaultHostName
+@description('Outputs the Function App URL for the ONS Geographies function')
+output onsGeographiesFunctionAppUrl string = 'https://${onsGeographiesFunctionApp.properties.defaultHostName}/api'
 @description('Outputs the Function App URL for the NGD Wrapper function')
-output ngdWrapperFunctionAppUrl string = ngdWrapperFunctionApp.defaultHostName
+output ngdWrapperFunctionAppUrl string = 'https://${ngdWrapperFunctionApp.properties.defaultHostName}/api'
 @description('Outputs the Log Analytics Workspace ID')
 output logAnalyticsWorkspaceId string = logAnalyticsWorkspace.id
 @description('Outputs the Log Analytics Workspace Name')
