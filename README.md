@@ -22,7 +22,7 @@ Azure deployment has been written using [Azure Resource Manager (ARM)](https://l
 
 ### Permissions
 
-You will also need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
+You will need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
 
 ### Instructions, Azure Portal
 
@@ -80,11 +80,9 @@ az deployment group create
 Both Azure Function App and OS DataHub authorisation must be considered for use of the API.
 - If OSDataHubProjectKey and OSDataHubProjectSecret are left blank in setup, then the Function App is left unauthorised (func.AuthLevel.ANONYMOUS), allowing open access to the endpoints.
     - An OS DataHub key must then be supplied with each request, either as a query parameter or a header. See the [catalyst-ngd-wrappers-azure repository](https://github.com/Geovation/catalyst-ngd-wrappers-azure).
-    - You can add authorisation manually if you wish: for example, by creating a Usage Plan and API key on the [API Gateway console](https://eu-west-2.console.aws.amazon.com/apigateway).
-- If you supply OSDataHubProjectKey and OSDataHubProjectSecret in setup, API Gateway key authorisation is automatically enabled, and a key and usage plan generated (see below)
-    - You can find the key under "API Keys" on the API Gateway console.
-    - This key must be passed to all API requests as the [X-API-Key header](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-key-source.html).
-    - By default, there is no throttling or quotas to the usage plan. To add these, access the plan through the [API Gateway console](https://eu-west-2.console.aws.amazon.com/apigateway), find your plan under 'Usage plans', select 'Actions > 'Edit usage plan', and configure these settings.
+- If you supply osDataHubProjectKey and osDataHubProjectSecret in setup, function app authorisation is automatically enabled for security, and a key must be supplied with each request.
+    - From the Function App resource, you can find the default key by going to the left panel > 'Functions' > 'App keys'. More information about [Function App keys here](https://learn.microsoft.com/en-us/azure/azure-functions/function-keys-how-to?tabs=azure-portal#understand-keys).
+    - This key must be passed to all API requests [either as a `x-functions-key` header, or as a `code` query parameter](https://learn.microsoft.com/en-us/azure/azure-functions/function-keys-how-to?tabs=azure-portal#use-access-keys).
 
 ### Deployment Deletion
 
@@ -158,7 +156,7 @@ Both API Gateway and OS DataHub authorisation must be considered for use of the 
 - If OSDataHubProjectKey and OSDataHubProjectSecret are left blank in setup, then the Gateway API is left unauthorised, allowing open access to the endpoints.
     - An OS DataHub key must then be supplied with each request, either as a query parameter or a header. See the [catalyst-ngd-wrappers-aws repository](https://github.com/Geovation/catalyst-ngd-wrappers-aws).
     - You can add authorisation manually if you wish: for example, by creating a Usage Plan and API key on the [API Gateway console](https://eu-west-2.console.aws.amazon.com/apigateway).
-- If you supply OSDataHubProjectKey and OSDataHubProjectSecret in setup, API Gateway key authorisation is automatically enabled, and a key and usage plan generated (see below)
+- If you supply OSDataHubProjectKey and OSDataHubProjectSecret in setup, API Gateway key authorisation is automatically enabled for security, and a key and usage plan generated (see below)
     - You can find the key under 'API Keys' on the API Gateway console.
     - This key must be passed to all API requests as the [X-API-Key header](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-key-source.html).
     - By default, there is no throttling or quotas to the usage plan. To add these, access the plan through the [API Gateway console](https://eu-west-2.console.aws.amazon.com/apigateway), find your plan under 'Usage plans', select 'Actions > 'Edit usage plan', and configure these settings.
