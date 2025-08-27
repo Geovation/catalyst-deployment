@@ -24,7 +24,7 @@ Azure deployment has been written using [Azure Resource Manager (ARM)](https://l
 
 You will need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
 
-### Instructions, Azure Portal
+### Method 1: Azure Portal
 
 This method works only with the json file. [Further information here](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/quickstart-create-templates-use-the-portal).
 
@@ -35,7 +35,7 @@ This method works only with the json file. [Further information here](https://le
 - If you wish, change any of the other Instance details from their defaults.
 - Select 'Review + create' > 'Create'.
 
-### Instructions, VS-Code Deployment
+### Method 2: VS-Code Deployment
 
 This method works only with the bicep file. [Further information here](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-vscode).
 
@@ -45,7 +45,7 @@ This method works only with the bicep file. [Further information here](https://l
 - Under 'parameters', either change resources to your desired name, or leave as default.
 - Select 'deploy' and wait for resources to deploy. They should become accessible through the Resource group on the Azure portal.
 
-### Instructions, Azure CLI Deployment
+### Method 3: Azure CLI Deployment
 
 This method works with either the bicep or the json file. [Further information here](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-cli). There are similar methods using [Azure PowerShell](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-powershell) and [Azure Cloud Shell](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-cloud-shell?tabs=azure-powershell).
 
@@ -124,7 +124,7 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
     - logs:PutLogEvents
 - You will also need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
 
-### Instructions, CloudFormation Console
+### Method 1 CloudFormation Console
 
 1. Go to the [CloudFormation console](https://eu-west-2.console.aws.amazon.com/cloudformation), select 'Create stack' > 'With new resources (standard)'.
 2. Under 'Prerequisite - Prepare template', ensure 'Choose an existing template' is selected, and under 'Specify template' select 'Upload a template file' and upload main.yml from the aws directory.
@@ -135,7 +135,7 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
 5. Keep default settings on the 'Configure stack option' page (note the acknowledgement that CloudFormation will create IAM resources), and create the stack.
 6. It should take a few minutes for the Stack to build.
 
-### Instructions, AWS CLI
+### Method 2: AWS CLI
 
 - Find further details and parameters [here](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html).
 - In addition to the three example parameters given below, other parameters can be modified from their defaults:
