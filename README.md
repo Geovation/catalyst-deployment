@@ -24,7 +24,7 @@ Azure deployment has been written using [Azure Resource Manager (ARM)](https://l
 
 You will need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
 
-![Azure Logo](https://github.com/Geovation/catalyst-deployment/blob/docs/azure-docs/assets/AzureLogo.png?raw=true)
+![Azure Logo](https://github.com/Geovation/catalyst-deployment/blob/docs/azure-docs/assets/AzureLogo.png?raw=true =250x250)
 ### Method 1: Azure Portal
 
 This method works only with the json file. [Further information here](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/quickstart-create-templates-use-the-portal).
@@ -107,7 +107,7 @@ Running the deployment automatically generates all the required resources. These
 | onsGeographiesAppInsights     | components         | Specification for NGD Wrapper Application Insights workspace, for viewing telemetry, and stats for API use.                                                             |
 | logAnalyticsWorkspace         | workspaces         | Log analytics workspace for viewing activity logs from the whole Resource group.                                                                                       |
 
-![AWS Logo](https://github.com/Geovation/catalyst-deployment/blob/docs/azure-docs/assets/AWSLogo.png?raw=true)
+![AWS Logo](https://github.com/Geovation/catalyst-deployment/blob/docs/azure-docs/assets/AWSLogo.png?raw=true =250x250)
 ## AWS
 
 AWS deployment has been written using [CloudFormation templates](https://aws.amazon.com/cloudformation/resources/templates/). There are two complementary templates: main.yml and main.json, which mirror each other. Either of these should work for the two deployment methods listed below.
