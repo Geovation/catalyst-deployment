@@ -24,11 +24,12 @@ Azure deployment has been written using [Azure Resource Manager (ARM)](https://l
 
 You will need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
 
+![Azure Logo](https://github.com/Geovation/catalyst-deployment/tree/main/assets/AzureLogo.png)
 ### Method 1: Azure Portal
 
 This method works only with the json file. [Further information here](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/quickstart-create-templates-use-the-portal).
 
-- Go to the ['Deploy a custom template' resource](https://portal.azure.com/#create/Microsoft.Template) on the Azure portal.
+- Go to the ['Deploy a custom template' resource](https://portal.azure.com/#create/Microsoft.Template) on the [Azure portal](https://portal.azure.com/#home).
 - Select 'Build your own template in the editor' > 'Load file', select the main.json template (the bicep file is not compatable with the custom template builder), and 'Save'.
 - Select your subscription and desired Resource Group and Instance region.
 - If you want internal authorisation handling, add your OS DataHub Project Key and Secret to the Instance details.
@@ -106,6 +107,7 @@ Running the deployment automatically generates all the required resources. These
 | onsGeographiesAppInsights     | components         | Specification for NGD Wrapper Application Insights workspace, for viewing telemetry, and stats for API use.                                                             |
 | logAnalyticsWorkspace         | workspaces         | Log analytics workspace for viewing activity logs from the whole Resource group.                                                                                       |
 
+![AWS Logo](https://github.com/Geovation/catalyst-deployment/tree/main/assets/AWSLogo.png)
 ## AWS
 
 AWS deployment has been written using [CloudFormation templates](https://aws.amazon.com/cloudformation/resources/templates/). There are two complementary templates: main.yml and main.json, which mirror each other. Either of these should work for the two deployment methods listed below.
