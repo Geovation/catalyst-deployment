@@ -92,6 +92,20 @@ Deleting a template deployment does **not** delete the associated resources in t
 
 Running the deployment automatically generates all the required resources. These resources are summarised below.
 
+| Resource                     | Resource Type     | Description                                                                                                                                                             |
+|------------------------------|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ngdWrapperStorage            | storageAccounts    | Storage location for NGD Wrapper Function App                                                                                                                          |
+| onsGeographiesStorage         | storageAccounts    | Storage location for ONS Geographies Function App                                                                                                                     |
+| ngdWrapperServicePlan        | serverfarms       | Definition of compute resource allocated to ONS Geographies Function App. If you wish to change these allocations, you can edit the bicep/json code and [refer to the serverfarms docs](https://learn.microsoft.com/en-us/azure/templates/microsoft.web/serverfarms?pivots=deployment-language-bicep). |
+| onsGeographiesServicePlan     | serverfarms       | Definition of compute resource allocated to NGD Wrapper Function App. If you wish to change these allocations, you can edit the bicep/json code and refer to the serverfarms docs. |
+| ngdWrapperFunctionApp        | sites             | The core entity representing the NGD Wrapper Function App.                                                                                                           |
+| onsGeographiesFunctionApp     | sites             | The core entity representing the ONS Geographies Function App.                                                                                                        |
+| ngdWrapperZipDeploy          | sites/extensions   | The definition of how the ONS Geographies Function App is [deployed from a Zip file located in github](https://learn.microsoft.com/en-us/azure/azure-functions/deployment-zip-push). |
+| onsGeographiesZipDeploy       | sites/extensions   | The definition of how the NGD Wrapper Function App is deployed from a Zip file located in github.                                                                      |
+| ngdWrapperAppInsights        | components         | Specification for ONS Geographies Application Insights workspace, for viewing telemetry, and stats for API use.                                                        |
+| onsGeographiesAppInsights     | components         | Specification for NGD Wrapper Application Insights workspace, for viewing telemetry, and stats for API use.                                                             |
+| logAnalyticsWorkspace         | workspaces         | Log analytics workspace for viewing activity logs from the whole Resource group.                                                                                       |
+
 ## AWS
 
 AWS deployment has been written using [CloudFormation templates](https://aws.amazon.com/cloudformation/resources/templates/). There are two complementary templates: main.yml and main.json, which mirror each other. Either of these should work for the two deployment methods listed below.
@@ -177,7 +191,7 @@ Running the stack automatically generates all the required resources. These reso
 Note that an S3 Bucket is used as a temporary code store for the lambda functions, as well as a permanent store for the ONS Geographies ducdb database.
 The two temporary resources list are not used by the final product, but only required for the initial import of the code.
 
-| Resource                     | Resource Name in `main.yml`         | Resource Type           | Notes                                                                 | Other Associated Resources                                      |
+| Resource                     | Resource Name in `main.yml`         | Resource Type           | Description                                                                 | Other Associated Resources                                      |
 |-----------------------------|-------------------------------------|--------------------------|-----------------------------------------------------------------------|------------------------------------------------------------------|
 | Temporary S3 Bucket         | LambdaBucket                        | S3 Bucket                | Storage location for the ONS Geography duckdb database. Also used as an intermediary storage location for the Lambda function code between Github and Lambda functions.    |                                                                  |
 | Temporary Bootstrap Function| InitFunction                        | Lambda Function          | Moves the lambda function code and the ONS Geography database from GitHub to S3. Triggered by _Initialize_ and _CleanupBootstrapLambda_ custom resources.   | Initialize, CleanupBootstrapLambda                              |
