@@ -18,7 +18,7 @@ Using these resources, you can get a **working API up and running in minutes** w
 
 ## Azure
 
-Azure deployment has been written using [Azure Resource Manager (ARM)](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/overview) templates.
+Azure deployment has been written using [Azure Resource Manager (ARM)](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/overview) templates. There are two complementary templates: main.bicep and main.json, which mirror each other. One or both of these work for the three deployment methods listed below.
 
 ### Permissions
 
@@ -26,7 +26,7 @@ You will need to create a project on the [OS DataHub](https://osdatahub.os.uk/pr
 
 ### Instructions, Azure Portal
 
-[Further information](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/quickstart-create-templates-use-the-portal)
+This method works only with the json file. [Further information here](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/quickstart-create-templates-use-the-portal).
 
 - Go to the ['Deploy a custom template' resource](https://portal.azure.com/#create/Microsoft.Template) on the Azure portal.
 - Select 'Build your own template in the editor' > 'Load file', select the main.json template (the bicep file is not compatable with the custom template builder), and 'Save'.
@@ -37,7 +37,7 @@ You will need to create a project on the [OS DataHub](https://osdatahub.os.uk/pr
 
 ### Instructions, VS-Code Deployment
 
-[Further information](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-vscode)
+This method works only with the bicep file. [Further information here](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-vscode).
 
 - Navigate to VS-Code extensions, and install the extension called 'Bicep' from Microsoft.
 - On the 'explorer' panel, right-click on the bicep file, and select 'Show Deployment Pane'. You may be asked to allow Bicep access and sign-in to Microsoft.
@@ -47,7 +47,7 @@ You will need to create a project on the [OS DataHub](https://osdatahub.os.uk/pr
 
 ### Instructions, Azure CLI Deployment
 
-[Further information](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-cli)
+This method works with either the bicep or the json file. [Further information here](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-cli). There are similar methods using [Azure PowerShell](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-powershell) and [Azure Cloud Shell](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-cloud-shell?tabs=azure-powershell).
 
 The code below can run either locally, or through a Cloud Shell terminal on the Azure portral, accessible through the Cloud Shell icon (`>_`) in the header panel at the top right of the page.
 
@@ -88,9 +88,13 @@ Both Azure Function App and OS DataHub authorisation must be considered for use 
 
 Deleting a template deployment does **not** delete the associated resources in the resource group. You must delete these separately.
 
+### Resources Overview
+
+Running the deployment automatically generates all the required resources. These resources are summarised below.
+
 ## AWS
 
-AWS deployment has been written using [CloudFormation templates](https://aws.amazon.com/cloudformation/resources/templates/).
+AWS deployment has been written using [CloudFormation templates](https://aws.amazon.com/cloudformation/resources/templates/). There are two complementary templates: main.yml and main.json, which mirror each other. Either of these should work for the two deployment methods listed below.
 
 ### Permissions
 
@@ -158,7 +162,7 @@ Both API Gateway and OS DataHub authorisation must be considered for use of the 
     - You can add authorisation manually if you wish: for example, by creating a Usage Plan and API key on the [API Gateway console](https://eu-west-2.console.aws.amazon.com/apigateway).
 - If you supply OSDataHubProjectKey and OSDataHubProjectSecret in setup, API Gateway key authorisation is automatically enabled for security, and a key and usage plan generated (see below)
     - You can find the key under 'API Keys' on the API Gateway console.
-    - This key must be passed to all API requests as the [X-API-Key header](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-key-source.html).
+    - This key must be passed to all API requests as the [`X-API-Key` header](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-key-source.html).
     - By default, there is no throttling or quotas to the usage plan. To add these, access the plan through the [API Gateway console](https://eu-west-2.console.aws.amazon.com/apigateway), find your plan under 'Usage plans', select 'Actions > 'Edit usage plan', and configure these settings.
 
 ### Stack Deletion
@@ -169,7 +173,7 @@ However, if you choose to delete a stack, you must **first manually empty the S3
 
 ### Resources Overview
 
-Running the main.yaml file automatically generates all the required resources. These resources are summarised below.
+Running the stack automatically generates all the required resources. These resources are summarised below.
 Note that an S3 Bucket is used as a temporary code store for the lambda functions, as well as a permanent store for the ONS Geographies ducdb database.
 The two temporary resources list are not used by the final product, but only required for the initial import of the code.
 
