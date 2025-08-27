@@ -31,7 +31,7 @@ You will also need to create a project on the [OS DataHub](https://osdatahub.os.
 - Go to the ['Deploy a custom template' resource](https://portal.azure.com/#create/Microsoft.Template) on the Azure portal.
 - Select 'Build your own template in the editor' > 'Load file', select the main.json template (the bicep file is not compatable with the custom template builder), and 'Save'.
 - Select your subscription and desired Resource Group and Instance region.
-- If you want internal authentication handling, add your OS DataHub Project Key and Secret to the Instance details.
+- If you want internal authorisation handling, add your OS DataHub Project Key and Secret to the Instance details.
 - If you wish, change any of the other Instance details from their defaults.
 - Select 'Review + create' > 'Create'.
 
@@ -53,7 +53,7 @@ The code below can run either locally, or through a Cloud Shell terminal on the 
 
 - If you use a local terminal, you must first login with `az login`, and entering a number from the listed subscriptions.
 - If you use the Cloud Shell terminal, you must first select 'Manage files'>'Upload' and upload the .bicep code (it is uploaded to the base directory, so _path/to/main.bicep_ is _main.bicep_).
-- The parameters below show how OS authentication can be configured, as well as optional changes to _onsGeographiesName_ and _ngdWrapperName_ from their defaults.
+- The parameters below show how OS authorisation can be configured, as well as optional changes to _onsGeographiesName_ and _ngdWrapperName_ from their defaults.
 - Either the bicep or the json file can be used.
 - The other parameters which can be set are _workspaceName_ and _location_.
 
@@ -75,8 +75,16 @@ az deployment group create
 - From the deployment overview, in the left panel, under 'Outputs', you can view names of resources, as well as the root URLs for the two APIs.
 - For use of the API, please see the documentation under the [catalyst-ngd-wrappers-azure](https://github.com/Geovation/catalyst-ngd-wrappers-azure) repository.
 
-### Authentication
-**TODO**
+### Authorisation
+
+Both Azure Function App and OS DataHub authorisation must be considered for use of the API.
+- If OSDataHubProjectKey and OSDataHubProjectSecret are left blank in setup, then the Function App is left unauthorised (func.AuthLevel.ANONYMOUS), allowing open access to the endpoints.
+    - An OS DataHub key must then be supplied with each request, either as a query parameter or a header. See the [catalyst-ngd-wrappers-azure repository](https://github.com/Geovation/catalyst-ngd-wrappers-azure).
+    - You can add authorisation manually if you wish: for example, by creating a Usage Plan and API key on the [API Gateway console](https://eu-west-2.console.aws.amazon.com/apigateway).
+- If you supply OSDataHubProjectKey and OSDataHubProjectSecret in setup, API Gateway key authorisation is automatically enabled, and a key and usage plan generated (see below)
+    - You can find the key under "API Keys" on the API Gateway console.
+    - This key must be passed to all API requests as the [X-API-Key header](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-key-source.html).
+    - By default, there is no throttling or quotas to the usage plan. To add these, access the plan through the [API Gateway console](https://eu-west-2.console.aws.amazon.com/apigateway), find your plan under 'Usage plans', select 'Actions > 'Edit usage plan', and configure these settings.
 
 ### Deployment Deletion
 
@@ -144,13 +152,14 @@ aws cloudformation create-stack
 - Under 'Outputs', the apiGatewayInvokeURL value provides the root URL which can be used to access the various endpoints.
 - For use of the API, please see the documentation under the [catalyst-ngd-wrappers-aws](https://github.com/Geovation/catalyst-ngd-wrappers-aws) repository.
 
-### Authentication
+### Authorisation
 
-Both API Gateway and OS DataHub authorisation must be configured for use of the API.
+Both API Gateway and OS DataHub authorisation must be considered for use of the API.
 - If OSDataHubProjectKey and OSDataHubProjectSecret are left blank in setup, then the Gateway API is left unauthorised, allowing open access to the endpoints.
+    - An OS DataHub key must then be supplied with each request, either as a query parameter or a header. See the [catalyst-ngd-wrappers-aws repository](https://github.com/Geovation/catalyst-ngd-wrappers-aws).
     - You can add authorisation manually if you wish: for example, by creating a Usage Plan and API key on the [API Gateway console](https://eu-west-2.console.aws.amazon.com/apigateway).
 - If you supply OSDataHubProjectKey and OSDataHubProjectSecret in setup, API Gateway key authorisation is automatically enabled, and a key and usage plan generated (see below)
-    - You can find the key under "API Keys" on the API Gateway console.
+    - You can find the key under 'API Keys' on the API Gateway console.
     - This key must be passed to all API requests as the [X-API-Key header](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-key-source.html).
     - By default, there is no throttling or quotas to the usage plan. To add these, access the plan through the [API Gateway console](https://eu-west-2.console.aws.amazon.com/apigateway), find your plan under 'Usage plans', select 'Actions > 'Edit usage plan', and configure these settings.
 
@@ -178,9 +187,9 @@ The two temporary resources list are not used by the final product, but only req
 | NGD Wrappers Methods        | MethodNGD…                          | ApiGateway Method        | API methods to trigger NGD Wrapper endpoints.                        |                                                                  |
 | ONS Geographies Method      | MethodONS                           | ApiGateway Method        | API method to trigger ONS Geographies endpoints.                     |                                                                  |
 | Gateway API Deployment      | ApiGatewayDeployment                | ApiGateway Deployment    | Packaged publication of the API.                                     |                                                                  |
-| Gateway Usage Plan          | UsagePlan                           | ApiGateway Usage Plan    | Usage plan for accessing Gateway API stage. Generated for security **only if OS Datahub credentials are supplied** as parameters for automatic OS authentication.                          |                                                                  |
-| Gateway API Key             | ApiKey                              | ApiGateway API Key       | An API key associated with the usage plan and Gateway API stage. Generated for security **only if OS Datahub credentials are supplied** as parameters for automatic OS authentication. |                                                                  |
-| Usage Plan <> Key Association| UsagePlanKey                       | ApiGateway Usage Plan Key| Associates API key with usage plan. Generated for security **only if OS Datahub credentials are supplied** as parameters for automatic OS authentication.                                  |                                                                  |
+| Gateway Usage Plan          | UsagePlan                           | ApiGateway Usage Plan    | Usage plan for accessing Gateway API stage. Generated for security **only if OS Datahub credentials are supplied** as parameters for automatic OS authorisation.                          |                                                                  |
+| Gateway API Key             | ApiKey                              | ApiGateway API Key       | An API key associated with the usage plan and Gateway API stage. Generated for security **only if OS Datahub credentials are supplied** as parameters for automatic OS authorisation. |                                                                  |
+| Usage Plan <> Key Association| UsagePlanKey                       | ApiGateway Usage Plan Key| Associates API key with usage plan. Generated for security **only if OS Datahub credentials are supplied** as parameters for automatic OS authorisation.                                  |                                                                  |
 
 # Feedback and Feature requests
 
