@@ -11,22 +11,106 @@ The code which this repository deploys is available at four [Geovation repositor
 
 This repository contains resources to deploy the Catalyst API tools to cloud services, including:
 
-- Azure
-- AWS
+- Microsoft Azure
+- Amazon Web Services (AWS)
 
 Using these resources, you can get a **working API up and running in minutes** with minimal manual configuration.
 
 ## Azure
 
-Azure deployment has been written using [Azure Resource Manager (ARM)](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/overview) templates.
+Azure deployment has been written using [Azure Resource Manager (ARM)](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/overview) templates. There are two complementary templates: main.bicep and main.json, which mirror each other. One or both of these work for the three deployment methods listed below.
+
+### Permissions
+
+You will need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
+
+### Method 1: Azure Portal
+
+This method works only with the json file. [Further information here](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/quickstart-create-templates-use-the-portal).
+
+- Go to the ['Deploy a custom template' resource](https://portal.azure.com/#create/Microsoft.Template) on the [Azure portal](https://portal.azure.com/#home).
+- Select 'Build your own template in the editor' > 'Load file', select the main.json template (the bicep file is not compatable with the custom template builder), and 'Save'.
+- Select your subscription and desired Resource Group and Instance region.
+- If you want internal authorisation handling, add your OS DataHub Project Key and Secret to the Instance details.
+- If you wish, change any of the other Instance details from their defaults.
+- Select 'Review + create' > 'Create'.
+
+### Method 2: VS-Code Deployment
+
+This method works only with the bicep file. [Further information here](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-vscode).
+
+- Navigate to VS-Code extensions, and install the extension called 'Bicep' from Microsoft.
+- On the 'explorer' panel, right-click on the bicep file, and select 'Show Deployment Pane'. You may be asked to allow Bicep access and sign-in to Microsoft.
+- In the deployment pane, under Deployment Scope, select the scription and the Resource Group you would like to deploy with.
+- Under 'parameters', either change resources to your desired name, or leave as default.
+- Select 'deploy' and wait for resources to deploy. They should become accessible through the Resource group on the Azure portal.
+
+### Method 3: Azure CLI Deployment
+
+This method works with either the bicep or the json file. [Further information here](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-cli). There are similar methods using [Azure PowerShell](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-powershell) and [Azure Cloud Shell](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-cloud-shell?tabs=azure-powershell).
+
+The code below can run either locally, or through a Cloud Shell terminal on the Azure portral, accessible through the Cloud Shell icon (`>_`) in the header panel at the top right of the page.
+
+- If you use a local terminal, you must first login with `az login`, and entering a number from the listed subscriptions.
+- If you use the Cloud Shell terminal, you must first select 'Manage files'>'Upload' and upload the .bicep code (it is uploaded to the base directory, so _path/to/main.bicep_ is _main.bicep_).
+- The parameters below show how OS authorisation can be configured, as well as optional changes to _onsGeographiesName_ and _ngdWrapperName_ from their defaults.
+- Either the bicep or the json file can be used.
+- The other parameters which can be set are _workspaceName_ and _location_.
+
+```
+az deployment group create
+    --resource-group <your-resource-group>
+    --template-file path/to/main.bicep
+    --parameters
+        onsGeographiesName=ons-geographies
+        ngdWrapperName=ngd-wrapper
+        osDataHubProjectApiKey=<your-datahub-key>
+        osDataHubProjectSecret=<your-datahub-secret>
+```
+
+### Calling the API
+
+- Links to the various resources, including the Lambda Function and the Gateway API, can be viewed by selecting the Resource Group from the [Resource Groups service](https://portal.azure.com/#browse/resourcegroups).
+- In the left panel, under 'Settings' > 'deployments', you can select the deployment and view deployment details.
+- From the deployment overview, in the left panel, under 'Outputs', you can view names of resources, as well as the root URLs for the two APIs.
+- For use of the API, please see the documentation under the [catalyst-ngd-wrappers-azure](https://github.com/Geovation/catalyst-ngd-wrappers-azure) repository.
+
+### Authorisation
+
+Both Azure Function App and OS DataHub authorisation must be considered for use of the API.
+- If OSDataHubProjectKey and OSDataHubProjectSecret are left blank in setup, then the Function App is left unauthorised (func.AuthLevel.ANONYMOUS), allowing open access to the endpoints.
+    - An OS DataHub key must then be supplied with each request, either as a query parameter or a header. See the [catalyst-ngd-wrappers-azure repository](https://github.com/Geovation/catalyst-ngd-wrappers-azure).
+- If you supply osDataHubProjectKey and osDataHubProjectSecret in setup, function app authorisation is automatically enabled for security, and a key must be supplied with each request.
+    - From the Function App resource, you can find the default key by going to the left panel > 'Functions' > 'App keys'. More information about [Function App keys here](https://learn.microsoft.com/en-us/azure/azure-functions/function-keys-how-to?tabs=azure-portal#understand-keys).
+    - This key must be passed to all API requests [either as a `x-functions-key` header, or as a `code` query parameter](https://learn.microsoft.com/en-us/azure/azure-functions/function-keys-how-to?tabs=azure-portal#use-access-keys).
+
+### Deployment Deletion
+
+Deleting a template deployment does **not** delete the associated resources in the resource group. You must delete these separately.
+
+### Resources Overview
+
+Running the deployment automatically generates all the required resources. These resources are summarised below.
+
+| Resource                     | Resource Type     | Description                                                                                                                                                             |
+|------------------------------|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ngdWrapperStorage            | storageAccounts    | Storage location for NGD Wrapper Function App                                                                                                                          |
+| onsGeographiesStorage         | storageAccounts    | Storage location for ONS Geographies Function App                                                                                                                     |
+| ngdWrapperServicePlan        | serverfarms       | Definition of compute resource allocated to ONS Geographies Function App. If you wish to change these allocations, you can edit the bicep/json code and [refer to the serverfarms docs](https://learn.microsoft.com/en-us/azure/templates/microsoft.web/serverfarms?pivots=deployment-language-bicep). |
+| onsGeographiesServicePlan     | serverfarms       | Definition of compute resource allocated to NGD Wrapper Function App. If you wish to change these allocations, you can edit the bicep/json code and refer to the serverfarms docs. |
+| ngdWrapperFunctionApp        | sites             | The core entity representing the NGD Wrapper Function App.                                                                                                           |
+| onsGeographiesFunctionApp     | sites             | The core entity representing the ONS Geographies Function App.                                                                                                        |
+| ngdWrapperZipDeploy          | sites/extensions   | The definition of how the ONS Geographies Function App is [deployed from a Zip file located in github](https://learn.microsoft.com/en-us/azure/azure-functions/deployment-zip-push). |
+| onsGeographiesZipDeploy       | sites/extensions   | The definition of how the NGD Wrapper Function App is deployed from a Zip file located in github.                                                                      |
+| ngdWrapperAppInsights        | components         | Specification for ONS Geographies Application Insights workspace, for viewing telemetry, and stats for API use.                                                        |
+| onsGeographiesAppInsights     | components         | Specification for NGD Wrapper Application Insights workspace, for viewing telemetry, and stats for API use.                                                             |
+| logAnalyticsWorkspace         | workspaces         | Log analytics workspace for viewing activity logs from the whole Resource group.                                                                                       |
 
 ## AWS
 
-AWS deployment has been written using [CloudFormation templates](https://aws.amazon.com/cloudformation/resources/templates/).
+AWS deployment has been written using [CloudFormation templates](https://aws.amazon.com/cloudformation/resources/templates/). There are two complementary templates: main.yml and main.json, which mirror each other. Either of these should work for the two deployment methods listed below.
 
-### Instructions
-
-#### 1. **Permissions**
+### Permissions
 
 - You will require the following AWS perissions:
     - cloudformation:CreateStack
@@ -40,7 +124,7 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
     - logs:PutLogEvents
 - You will also need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
 
-#### 2. **CloudFormation Stack**
+### Method 1 CloudFormation Console
 
 1. Go to the [CloudFormation console](https://eu-west-2.console.aws.amazon.com/cloudformation), select 'Create stack' > 'With new resources (standard)'.
 2. Under 'Prerequisite - Prepare template', ensure 'Choose an existing template' is selected, and under 'Specify template' select 'Upload a template file' and upload main.yml from the aws directory.
@@ -51,43 +135,49 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
 5. Keep default settings on the 'Configure stack option' page (note the acknowledgement that CloudFormation will create IAM resources), and create the stack.
 6. It should take a few minutes for the Stack to build.
 
-#### **_CLI Alternative Method_**
+### Method 2: AWS CLI
 
-Below is a demonstration of how the AWS CLI could be used as an alternative to the CloudFormation interface.
-Find further details and parameters [here](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html).
+- Find further details and parameters [here](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html).
+- In addition to the three example parameters given below, other parameters can be modified from their defaults:
+    - NGDWrapperLambdaFunctionName
+    - ONSGeographiesLambdaFunctionName
+    - ApiGatewayStageName
+    - S3BucketName
+    - ONSGeographyDBFilePath
 
 ```
 aws configure
-    AWS Access Key ID [None]: <your-access-key-id>
-    AWS Secret Access Key [None]: <your-secret-access-key>
-    Default region name [None]: eu-west-2
-    Default output format [None]: json
+>>> AWS Access Key ID [None]: <your-access-key-id>
+>>> AWS Secret Access Key [None]: <your-secret-access-key>
+>>> Default region name [None]: eu-west-2
+>>> Default output format [None]: json
 
 aws cloudformation create-stack
     --stack-name catalyst-deployment
     --template-body file://path/to/main.yml
     --capabilities CAPABILITY_NAMED_IAM
     --parameters
-        ParameterKey=ApiKeyName,ParameterValue=CustomApiKeyName
+        ParameterKey=ApiKeyName,ParameterValue=<your-custom-api-key-name>
         ParameterKey=OSDataHubProjectKey,ParameterValue=<your-datahub-key>
         ParameterKey=OSDataHubProjectSecret,ParameterValue=<your-datahub-secret>
 ```
 
-#### 3. **Accessing the API**
+### Calling the API
 
 - Links to the various resources, including the Lambda Function and the Gateway API, can be viewed under 'Resources'. If you wish, extra settings (eg. API usage throttling, see below) can be set/changed using these.
 - Under 'Outputs', the apiGatewayInvokeURL value provides the root URL which can be used to access the various endpoints.
 - For use of the API, please see the documentation under the [catalyst-ngd-wrappers-aws](https://github.com/Geovation/catalyst-ngd-wrappers-aws) repository.
 
-### Authentication
+### Authorisation
 
-Both API Gateway and OS DataHub authorisation must be configured for use of the API.
+Both API Gateway and OS DataHub authorisation must be considered for use of the API.
 - If OSDataHubProjectKey and OSDataHubProjectSecret are left blank in setup, then the Gateway API is left unauthorised, allowing open access to the endpoints.
+    - An OS DataHub key must then be supplied with each request, either as a query parameter or a header. See the [catalyst-ngd-wrappers-aws repository](https://github.com/Geovation/catalyst-ngd-wrappers-aws).
     - You can add authorisation manually if you wish: for example, by creating a Usage Plan and API key on the [API Gateway console](https://eu-west-2.console.aws.amazon.com/apigateway).
-- If you supply OSDataHubProjectKey and OSDataHubProjectSecret in setup, API Gateway key authorisation is automatically enabled, and a key and usage plan generated (see below)
-    - You can find the key under "API Keys" on the API Gateway console.
-    - This key must be passed to all API requests as the [X-API-Key header](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-key-source.html).
-    - By default, there is no throttling or quotas to the usage plan. To add these, access the plan through the [API Gateway console](https://eu-west-2.console.aws.amazon.com/apigateway), find your plan under 'Usage plans', select 'Actions'>'Edit usage plan', and configure these settings.
+- If you supply OSDataHubProjectKey and OSDataHubProjectSecret in setup, API Gateway key authorisation is automatically enabled for security, and a key and usage plan generated (see below)
+    - You can find the key under 'API Keys' on the API Gateway console.
+    - This key must be passed to all API requests as the [`X-API-Key` header](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-key-source.html).
+    - By default, there is no throttling or quotas to the usage plan. To add these, access the plan through the [API Gateway console](https://eu-west-2.console.aws.amazon.com/apigateway), find your plan under 'Usage plans', select 'Actions > 'Edit usage plan', and configure these settings.
 
 ### Stack Deletion
 
@@ -97,11 +187,11 @@ However, if you choose to delete a stack, you must **first manually empty the S3
 
 ### Resources Overview
 
-Running the main.yaml file automatically generates all the required resources. These resources are summarised below.
+Running the stack automatically generates all the required resources. These resources are summarised below.
 Note that an S3 Bucket is used as a temporary code store for the lambda functions, as well as a permanent store for the ONS Geographies ducdb database.
 The two temporary resources list are not used by the final product, but only required for the initial import of the code.
 
-| Resource                     | Resource Name in `main.yml`         | Resource Type           | Notes                                                                 | Other Associated Resources                                      |
+| Resource                     | Resource Name in `main.yml`         | Resource Type           | Description                                                                 | Other Associated Resources                                      |
 |-----------------------------|-------------------------------------|--------------------------|-----------------------------------------------------------------------|------------------------------------------------------------------|
 | Temporary S3 Bucket         | LambdaBucket                        | S3 Bucket                | Storage location for the ONS Geography duckdb database. Also used as an intermediary storage location for the Lambda function code between Github and Lambda functions.    |                                                                  |
 | Temporary Bootstrap Function| InitFunction                        | Lambda Function          | Moves the lambda function code and the ONS Geography database from GitHub to S3. Triggered by _Initialize_ and _CleanupBootstrapLambda_ custom resources.   | Initialize, CleanupBootstrapLambda                              |
@@ -113,9 +203,9 @@ The two temporary resources list are not used by the final product, but only req
 | NGD Wrappers Methods        | MethodNGD…                          | ApiGateway Method        | API methods to trigger NGD Wrapper endpoints.                        |                                                                  |
 | ONS Geographies Method      | MethodONS                           | ApiGateway Method        | API method to trigger ONS Geographies endpoints.                     |                                                                  |
 | Gateway API Deployment      | ApiGatewayDeployment                | ApiGateway Deployment    | Packaged publication of the API.                                     |                                                                  |
-| Gateway Usage Plan          | UsagePlan                           | ApiGateway Usage Plan    | Usage plan for accessing Gateway API stage. Generated for security **only if OS Datahub credentials are supplied** as parameters for automatic OS authentication.                          |                                                                  |
-| Gateway API Key             | ApiKey                              | ApiGateway API Key       | An API key associated with the usage plan and Gateway API stage. Generated for security **only if OS Datahub credentials are supplied** as parameters for automatic OS authentication. |                                                                  |
-| Usage Plan <> Key Association| UsagePlanKey                       | ApiGateway Usage Plan Key| Associates API key with usage plan. Generated for security **only if OS Datahub credentials are supplied** as parameters for automatic OS authentication.                                  |                                                                  |
+| Gateway Usage Plan          | UsagePlan                           | ApiGateway Usage Plan    | Usage plan for accessing Gateway API stage. Generated for security **only if OS Datahub credentials are supplied** as parameters for automatic OS authorisation.                          |                                                                  |
+| Gateway API Key             | ApiKey                              | ApiGateway API Key       | An API key associated with the usage plan and Gateway API stage. Generated for security **only if OS Datahub credentials are supplied** as parameters for automatic OS authorisation. |                                                                  |
+| Usage Plan <> Key Association| UsagePlanKey                       | ApiGateway Usage Plan Key| Associates API key with usage plan. Generated for security **only if OS Datahub credentials are supplied** as parameters for automatic OS authorisation.                                  |                                                                  |
 
 # Feedback and Feature requests
 

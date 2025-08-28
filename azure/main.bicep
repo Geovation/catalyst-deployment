@@ -12,31 +12,27 @@ param onsGeographiesName string = 'ons-geographies'
 @description('Name of the NGD Wrapper Function resources')
 param ngdWrapperName string = 'ngd-wrapper'
 
-// FOR LOGGING
-var logAnalyticsName = toLower('${workspaceName}-log-analytics')
+@description('OS DataHub Project API Key - used by NGD Wrapper function')
+@secure()
+param osDataHubProjectApiKey string = ''
 
-// SETTING VARIOUS HIGHER LEVEL PARAMS
+@description('OS DataHub Project Secret - used by NGD Wrapper function')
+@secure()
+param osDataHubProjectSecret string = ''
+
+var logAnalyticsName = toLower('${workspaceName}-log-analytics-t')
+
 var onsGeographiesServicePlanName = '${onsGeographiesName}-serviceplan'
 var onsGeographiesFunctionName = '${onsGeographiesName}-function'
 var onsGeographiesStoreName = replace(toLower('${onsGeographiesName}store'), '-', '')
 var onsGeographiesInsightsName = '${onsGeographiesName}-insights'
-// THE BELOW NEEDS TO BE SET TO LATEST
-var onsGeographiesFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ons-geographies-azure/releases/latest/download/azure_function_release.zip'
+var onsGeographiesFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ons-geographies-azure/releases/latest/download/azure_function_release_.zip'
 
 var ngdWrapperServicePlanName = '${ngdWrapperName}-serviceplan'
 var ngdWrapperFunctionName = '${ngdWrapperName}-function'
 var ngdWrapperStoreName = replace(toLower('${ngdWrapperName}store'), '-', '')
 var ngdWrapperInsightsName = '${ngdWrapperName}-insights'
-// THE BELOW NEEDS TO BE SET TO LATEST
-var ngdWrapperFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/release.zip'
-
-// VARIOUS RESOURCES
-// Log Analytics Workspace x1
-// --Zip deployments x2
-// Storage x2
-// Service Plans x2
-// App Insights x2
-// Function App x2
+var ngdWrapperFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/azure_function_release_.zip'
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' = {
   name: logAnalyticsName
@@ -139,8 +135,20 @@ resource ngdWrapperFunctionApp 'Microsoft.Web/sites@2024-04-01' = {
     reserved: true
     siteConfig: {
       numberOfWorkers: 1
-      linuxFxVersion: 'PYTHON|3.11'
+      linuxFxVersion: 'PYTHON|3.13'
       appSettings: [
+        {
+          name: 'CLIENT_ID'
+          value: osDataHubProjectApiKey
+        }
+        {
+          name: 'OS_DATAHUB_PROJECT_SECRET'
+          value: osDataHubProjectSecret
+        }
+        {
+          name: 'ROOT_URL'
+          value: 'https://${ngdWrapperFunctionName}.azurewebsites.net/api'
+        }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
           value: reference(resourceId('Microsoft.Insights/components', ngdWrapperInsightsName), '2015-05-01').InstrumentationKey
@@ -183,7 +191,7 @@ resource onsGeographiesFunctionApp 'Microsoft.Web/sites@2024-04-01' = {
     reserved: true
     siteConfig: {
       numberOfWorkers: 1
-      linuxFxVersion: 'PYTHON|3.11'
+      linuxFxVersion: 'PYTHON|3.13'
       appSettings: [
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
@@ -235,3 +243,20 @@ resource onsGeographiesZipDeploy 'Microsoft.Web/sites/extensions@2022-03-01' = {
     packageUri: onsGeographiesFunctionsPackageUri
   }
 }
+
+@description('Outputs the Function App URL for the ONS Geographies function')
+output onsGeographiesFunctionAppUrl string = 'https://${onsGeographiesFunctionApp.properties.defaultHostName}/api'
+@description('Outputs the Function App URL for the NGD Wrapper function')
+output ngdWrapperFunctionAppUrl string = 'https://${ngdWrapperFunctionApp.properties.defaultHostName}/api'
+@description('Outputs the Log Analytics Workspace ID')
+output logAnalyticsWorkspaceId string = logAnalyticsWorkspace.id
+@description('Outputs the Log Analytics Workspace Name')
+output logAnalyticsWorkspaceName string = logAnalyticsWorkspace.name
+@description('Outputs the NGD Wrapper Storage Account Name')
+output ngdWrapperStorageAccountName string = ngdWrapperStorage.name
+@description('Outputs the ONS Geographies Storage Account Name')
+output onsGeographiesStorageAccountName string = onsGeographiesStorage.name
+@description('Outputs the NGD Wrapper Application Insights Name')
+output ngdWrapperAppInsightsName string = ngdWrapperAppInsights.name
+@description('Outputs the ONS Geographies Application Insights Name')
+output onsGeographiesAppInsightsName string = onsGeographiesAppInsights.name
