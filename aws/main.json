@@ -1,908 +1,911 @@
 {
-    "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "Catalyst tool deployment on AWS. Includes Lambda functions and an endpoints deployed through API Gateway.\n",
-    "Parameters": {
-        "NGDWrapperLambdaFunctionName": {
-            "Type": "String",
-            "MinLength": 1,
-            "MaxLength": 64,
-            "AllowedPattern": "[a-zA-Z][a-zA-Z0-9_-]*",
-            "Description": "The name of the NGD Wrapper Lambda function",
-            "Default": "Lambda-NGDWrapper"
-        },
-        "ONSGeographiesLambdaFunctionName": {
-            "Type": "String",
-            "MinLength": 1,
-            "MaxLength": 64,
-            "AllowedPattern": "[a-zA-Z][a-zA-Z0-9_-]*",
-            "Description": "The name of the ONS Geographies Lambda function",
-            "Default": "Lambda-ONSGeographies"
-        },
-        "ApiGatewayStageName": {
-            "Type": "String",
-            "MinLength": 1,
-            "MaxLength": 64,
-            "AllowedPattern": "[a-zA-Z][a-zA-Z0-9_-]*",
-            "Description": "The stage name for the API Gateway deployment",
-            "Default": "prod"
-        },
-        "S3BucketName": {
-            "Type": "String",
-            "MinLength": 3,
-            "MaxLength": 64,
-            "AllowedPattern": "[a-z0-9-]*",
-            "Description": "The name of the S3 bucket to store Lambda code",
-            "Default": "catalyst-data-store"
-        },
-        "ONSGeographyDBFilePath": {
-            "Type": "String",
-            "MinLength": 1,
-            "MaxLength": 64,
-            "AllowedPattern": "[a-zA-Z][a-zA-Z0-9._-]*",
-            "Description": "The name of the ONS Geography database file",
-            "Default": "ons_postcodes.duckdb"
-        },
-        "OSDataHubProjectKey": {
-            "Type": "String",
-            "MinLength": 0,
-            "MaxLength": 32,
-            "AllowedPattern": "[a-zA-Z0-9]*",
-            "Description": "Your Project API Key from the OS Data Hub. If given, the API Gateway will be protected by an API key.",
-            "Default": ""
-        },
-        "OSDataHubProjectSecret": {
-            "Type": "String",
-            "MinLength": 0,
-            "MaxLength": 16,
-            "AllowedPattern": "[a-zA-Z0-9]*",
-            "Description": "The Project API Secret from the OS Data Hub. If given, the API Gateway will be protected by an API key.",
-            "Default": ""
-        },
-        "ApiKeyName": {
-            "Type": "String",
-            "MinLength": 0,
-            "MaxLength": 128,
-            "AllowedPattern": "[\\w+=,.@-]+",
-            "Description": "The name of the API key to be created for the API Gateway usage plan if DataHub credentials are supplied.",
-            "Default": "CatalystApiKey"
-        }
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Catalyst tool deployment on AWS. Includes Lambda functions and an endpoints deployed through API Gateway.\n",
+  "Parameters": {
+    "NGDWrapperLambdaFunctionName": {
+      "Type": "String",
+      "MinLength": 1,
+      "MaxLength": 64,
+      "AllowedPattern": "[a-zA-Z][a-zA-Z0-9_-]*",
+      "Description": "The name of the NGD Wrapper Lambda function",
+      "Default": "Lambda-NGDWrapper"
     },
-    "Conditions": {
-        "GatewayAuthRequired": {
-            "Fn::Or": [
+    "ONSGeographiesLambdaFunctionName": {
+      "Type": "String",
+      "MinLength": 1,
+      "MaxLength": 64,
+      "AllowedPattern": "[a-zA-Z][a-zA-Z0-9_-]*",
+      "Description": "The name of the ONS Geographies Lambda function",
+      "Default": "Lambda-ONSGeographies"
+    },
+    "ApiGatewayStageName": {
+      "Type": "String",
+      "MinLength": 1,
+      "MaxLength": 64,
+      "AllowedPattern": "[a-zA-Z][a-zA-Z0-9_-]*",
+      "Description": "The stage name for the API Gateway deployment",
+      "Default": "prod"
+    },
+    "S3BucketName": {
+      "Type": "String",
+      "MinLength": 3,
+      "MaxLength": 64,
+      "AllowedPattern": "[a-z0-9-]*",
+      "Description": "The name of the S3 bucket to store Lambda code",
+      "Default": "catalyst-data-store"
+    },
+    "ONSGeographyDBFilePath": {
+      "Type": "String",
+      "MinLength": 1,
+      "MaxLength": 64,
+      "AllowedPattern": "[a-zA-Z][a-zA-Z0-9._-]*",
+      "Description": "The name of the ONS Geography database file",
+      "Default": "ons_postcodes.duckdb"
+    },
+    "OSDataHubProjectKey": {
+      "Type": "String",
+      "MinLength": 0,
+      "MaxLength": 32,
+      "AllowedPattern": "[a-zA-Z0-9]*",
+      "Description": "Your Project API Key from the OS Data Hub. If given, the API Gateway will be protected by an API key.",
+      "Default": ""
+    },
+    "OSDataHubProjectSecret": {
+      "Type": "String",
+      "MinLength": 0,
+      "MaxLength": 16,
+      "AllowedPattern": "[a-zA-Z0-9]*",
+      "Description": "The Project API Secret from the OS Data Hub. If given, the API Gateway will be protected by an API key.",
+      "Default": ""
+    },
+    "ApiKeyName": {
+      "Type": "String",
+      "MinLength": 0,
+      "MaxLength": 128,
+      "AllowedPattern": "[\\w+=,.@-]+",
+      "Description": "The name of the API key to be created for the API Gateway usage plan if DataHub credentials are supplied.",
+      "Default": "CatalystApiKey"
+    }
+  },
+  "Conditions": {
+    "GatewayAuthRequired": {
+      "Fn::Or": [
+        {
+          "Fn::Not": [
+            {
+              "Fn::Equals": [
                 {
-                    "Fn::Not": [
-                        {
-                            "Fn::Equals": [
-                                {
-                                    "Ref": "OSDataHubProjectKey"
-                                },
-                                ""
-                            ]
-                        }
-                    ]
+                  "Ref": "OSDataHubProjectKey"
                 },
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "Fn::Not": [
+            {
+              "Fn::Equals": [
                 {
-                    "Fn::Not": [
-                        {
-                            "Fn::Equals": [
-                                {
-                                    "Ref": "OSDataHubProjectSecret"
-                                },
-                                ""
-                            ]
-                        }
-                    ]
-                }
-            ]
+                  "Ref": "OSDataHubProjectSecret"
+                },
+                ""
+              ]
+            }
+          ]
         }
-    },
-    "Resources": {
-        "LambdaBucket": {
-            "Type": "AWS::S3::Bucket",
-            "Properties": {
-                "BucketName": {
-                    "Ref": "S3BucketName"
-                }
-            }
-        },
-        "InitFunctionRole": {
-            "Type": "AWS::IAM::Role",
-            "Properties": {
-                "AssumeRolePolicyDocument": {
-                    "Version": "2012-10-17",
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Principal": {
-                                "Service": "lambda.amazonaws.com"
-                            },
-                            "Action": "sts:AssumeRole"
-                        }
-                    ]
-                },
-                "Policies": [
-                    {
-                        "PolicyName": "S3WriteDeletePolicy",
-                        "PolicyDocument": {
-                            "Version": "2012-10-17",
-                            "Statement": [
-                                {
-                                    "Effect": "Allow",
-                                    "Action": [
-                                        "s3:PutObject",
-                                        "s3:DeleteObject"
-                                    ],
-                                    "Resource": {
-                                        "Fn::Sub": "${LambdaBucket.Arn}/*"
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "PolicyName": "CloudWatchLogsPolicy",
-                        "PolicyDocument": {
-                            "Version": "2012-10-17",
-                            "Statement": [
-                                {
-                                    "Effect": "Allow",
-                                    "Action": [
-                                        "logs:CreateLogGroup",
-                                        "logs:CreateLogStream",
-                                        "logs:PutLogEvents"
-                                    ],
-                                    "Resource": {
-                                        "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        },
-        "InitFunction": {
-            "Type": "AWS::Lambda::Function",
-            "Properties": {
-                "FunctionName": "CatalystInitFunction",
-                "Description": "Populates S3 bucket with the NGD Wrapper code, or cleans up (ie. deletes) if requested.",
-                "Handler": "index.handler",
-                "Role": {
-                    "Fn::GetAtt": [
-                        "InitFunctionRole",
-                        "Arn"
-                    ]
-                },
-                "Runtime": "python3.13",
-                "MemorySize": 512,
-                "Timeout": 300,
-                "Code": {
-                    "ZipFile": "import json\nimport urllib.request\nimport boto3\nimport logging\n\nlogger = logging.getLogger()\nlogger.setLevel(logging.INFO)\n\nngd_wrappers_url = \"https://github.com/Geovation/catalyst-ngd-wrappers-aws/releases/latest/download/aws_lambda_release.zip\"\nons_geographies_url = \"https://github.com/Geovation/catalyst-ons-geographies-aws/releases/latest/download/aws_lambda_release.zip\"\nons_geographies_db_url = \"https://github.com/Geovation/catalyst-ons-geographies-db/releases/latest/download/ons_postcodes.duckdb\"\n\ndef send_response(event, context, status, reason=None):\n    response_body = {\n        'Status': status,\n        'Reason': reason or 'See the details in CloudWatch Log Stream: ' + context.log_stream_name,\n        'PhysicalResourceId': context.log_stream_name,\n        'StackId': event['StackId'],\n        'RequestId': event['RequestId'],\n        'LogicalResourceId': event['LogicalResourceId'],\n        'Data': {}\n    }\n\n    response_url = event['ResponseURL']\n    json_response_body = json.dumps(response_body).encode('utf-8')\n\n    try:\n        req = urllib.request.Request(\n            url=response_url,\n            data=json_response_body,\n            method='PUT',\n            headers={\n                'Content-Type': '',\n                'Content-Length': str(len(json_response_body))\n            }\n        )\n        with urllib.request.urlopen(req) as response:\n            logger.info(f\"CloudFormation response status: {response.status}\")\n    except Exception as e:\n        logger.error(f\"Failed to send response: {str(e)}\")\n\ndef handler(event, context):\n    logger.info(f\"Received event: {json.dumps(event)}\")\n\n    try:\n        s3 = boto3.client('s3')\n        bucket = event['ResourceProperties']['BucketName']\n        ngd_key = event['ResourceProperties'].get('NGDKeyName', 'ngd_wrappers_lambda.zip')\n        ons_key = event['ResourceProperties'].get('ONSKeyName', 'ons_geographies_lambda.zip')\n        ons_db_key = event['ResourceProperties'].get('ONSDBKeyName', 'ons_geographies_db.duckdb')\n        cleanup = event['ResourceProperties'].get('Cleanup', False)\n\n        if event['RequestType'] in ['Create', 'Update']:\n            if cleanup:\n                logger.info(\"Delete request received, removing S3 objects.\")\n                s3.delete_object(\n                    Bucket=bucket,\n                    Key=ngd_key\n                )\n                logger.info(f\"Deleted {ngd_key} from bucket {bucket}.\")\n                s3.delete_object(\n                    Bucket=bucket,\n                    Key=ons_key\n                )\n                logger.info(f\"Deleted {ons_key} from bucket {bucket}.\")\n            else:\n                response = urllib.request.urlopen(ons_geographies_db_url)\n                db_data = response.read()\n                s3.put_object(\n                    Bucket=bucket,\n                    Key=ons_db_key,\n                    Body=db_data\n                )\n                logger.info(f\"Uploaded {ons_db_key} to bucket {bucket}.\")\n                response = urllib.request.urlopen(ngd_wrappers_url)\n                zip_data = response.read()\n                s3.put_object(\n                    Bucket=bucket,\n                    Key=ngd_key,\n                    Body=zip_data\n                )\n                del response, zip_data  # Free memory\n                logger.info(f\"Uploaded {ngd_key} to bucket {bucket}.\")\n                response = urllib.request.urlopen(ons_geographies_url)\n                zip_data = response.read()\n                s3.put_object(\n                    Bucket=bucket,\n                    Key=ons_key,\n                    Body=zip_data\n                )\n                logger.info(f\"Uploaded {ons_key} to bucket {bucket}.\")\n        send_response(event, context, \"SUCCESS\")\n\n    except Exception as e:\n        logger.error(f\"Error: {str(e)}\")\n        send_response(event, context, \"FAILED\", reason=str(e))\n"
-                }
-            }
-        },
-        "Initialize": {
-            "Type": "Custom::InitFunction",
-            "DependsOn": [
-                "LambdaBucket",
-                "InitFunction"
-            ],
-            "Properties": {
-                "ServiceToken": {
-                    "Fn::GetAtt": [
-                        "InitFunction",
-                        "Arn"
-                    ]
-                },
-                "BucketName": {
-                    "Ref": "LambdaBucket"
-                },
-                "NGDKeyName": "ngd_wrappers_lambda.zip",
-                "ONSKeyName": "ons_geographies_lambda.zip",
-                "ONSDBKeyName": "ons_geographies_db.duckdb"
-            }
-        },
-        "NGDWrapperLambdaRole": {
-            "Type": "AWS::IAM::Role",
-            "Properties": {
-                "RoleName": "Lambda-NGDWrapper-Role",
-                "Description": "An execution role for the NGD Wrapper Lambda function",
-                "AssumeRolePolicyDocument": {
-                    "Version": "2012-10-17",
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Principal": {
-                                "Service": "lambda.amazonaws.com"
-                            },
-                            "Action": "sts:AssumeRole"
-                        }
-                    ]
-                },
-                "Policies": [
-                    {
-                        "PolicyName": "NGDWrapperLambdaPolicy",
-                        "PolicyDocument": {
-                            "Version": "2012-10-17",
-                            "Statement": [
-                                {
-                                    "Action": "lambda:InvokeFunction",
-                                    "Effect": "Allow",
-                                    "Resource": {
-                                        "Fn::Sub": "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${NGDWrapperLambdaFunctionName}"
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "PolicyName": "NGDWrapperCloudWatchPolicy",
-                        "PolicyDocument": {
-                            "Version": "2012-10-17",
-                            "Statement": [
-                                {
-                                    "Effect": "Allow",
-                                    "Action": [
-                                        "logs:CreateLogGroup",
-                                        "logs:CreateLogStream",
-                                        "logs:PutLogEvents"
-                                    ],
-                                    "Resource": {
-                                        "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        },
-        "NGDWrapperLambdaFunction": {
-            "Type": "AWS::Lambda::Function",
-            "DependsOn": [
-                "Initialize",
-                "NGDWrapperLambdaRole"
-            ],
-            "Properties": {
-                "Description": "Provides a wrapper for the NGD API",
-                "FunctionName": {
-                    "Ref": "NGDWrapperLambdaFunctionName"
-                },
-                "Handler": "lambda_function.lambda_handler",
-                "MemorySize": 128,
-                "Runtime": "python3.13",
-                "Role": {
-                    "Fn::GetAtt": [
-                        "NGDWrapperLambdaRole",
-                        "Arn"
-                    ]
-                },
-                "Timeout": 240,
-                "Environment": {
-                    "Variables": {
-                        "CLIENT_ID": {
-                            "Ref": "OSDataHubProjectKey"
-                        },
-                        "CLIENT_SECRET": {
-                            "Ref": "OSDataHubProjectSecret"
-                        }
-                    }
-                },
-                "PackageType": "Zip",
-                "Code": {
-                    "S3Bucket": {
-                        "Ref": "LambdaBucket"
-                    },
-                    "S3Key": "ngd_wrappers_lambda.zip"
-                }
-            }
-        },
-        "ONSGeographiesLambdaRole": {
-            "Type": "AWS::IAM::Role",
-            "Properties": {
-                "RoleName": "Lambda-ONSGeographies-Role",
-                "Description": "An execution role for the ONS Geographies Proxy",
-                "AssumeRolePolicyDocument": {
-                    "Version": "2012-10-17",
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Principal": {
-                                "Service": "lambda.amazonaws.com"
-                            },
-                            "Action": "sts:AssumeRole"
-                        }
-                    ]
-                },
-                "Policies": [
-                    {
-                        "PolicyName": "ONSGeographiesLambdaPolicy",
-                        "PolicyDocument": {
-                            "Version": "2012-10-17",
-                            "Statement": [
-                                {
-                                    "Action": "lambda:InvokeFunction",
-                                    "Effect": "Allow",
-                                    "Resource": {
-                                        "Fn::Sub": "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${ONSGeographiesLambdaFunctionName}"
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "PolicyName": "ONSGeographiesCloudWatchPolicy",
-                        "PolicyDocument": {
-                            "Version": "2012-10-17",
-                            "Statement": [
-                                {
-                                    "Action": [
-                                        "logs:CreateLogGroup",
-                                        "logs:CreateLogStream",
-                                        "logs:PutLogEvents"
-                                    ],
-                                    "Effect": "Allow",
-                                    "Resource": {
-                                        "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        },
-        "ONSGeographiesLambdaFunction": {
-            "Type": "AWS::Lambda::Function",
-            "DependsOn": [
-                "Initialize",
-                "ONSGeographiesLambdaRole"
-            ],
-            "Properties": {
-                "Description": "Proxy for the ONS Geographies Proxy",
-                "FunctionName": {
-                    "Ref": "ONSGeographiesLambdaFunctionName"
-                },
-                "Handler": "lambda_function.lambda_handler",
-                "MemorySize": 128,
-                "Runtime": "python3.13",
-                "Role": {
-                    "Fn::GetAtt": [
-                        "ONSGeographiesLambdaRole",
-                        "Arn"
-                    ]
-                },
-                "Timeout": 240,
-                "Environment": {
-                    "Variables": {
-                        "ONSGEOGRAPHY_DB_BUCKET": {
-                            "Ref": "S3BucketName"
-                        },
-                        "ONSGEOGRAPHY_DB_FILE": {
-                            "Ref": "ONSGeographyDBFilePath"
-                        }
-                    }
-                },
-                "PackageType": "Zip",
-                "Code": {
-                    "S3Bucket": {
-                        "Ref": "LambdaBucket"
-                    },
-                    "S3Key": "ons_geographies_lambda.zip"
-                }
-            }
-        },
-        "CleanupBootstrapLambda": {
-            "Type": "Custom::InitFunction",
-            "DependsOn": [
-                "NGDWrapperLambdaFunction",
-                "ONSGeographiesLambdaFunction"
-            ],
-            "Properties": {
-                "ServiceToken": {
-                    "Fn::GetAtt": [
-                        "InitFunction",
-                        "Arn"
-                    ]
-                },
-                "BucketName": {
-                    "Ref": "LambdaBucket"
-                },
-                "NGDKeyName": "ngd_wrappers_lambda.zip",
-                "ONSKeyName": "ons_geographies_lambda.zip",
-                "Cleanup": true
-            }
-        },
-        "NGDWrapperApiGatewayInvokeLatest": {
-            "Type": "AWS::Lambda::Permission",
-            "Properties": {
-                "Action": "lambda:InvokeFunction",
-                "FunctionName": {
-                    "Fn::GetAtt": [
-                        "NGDWrapperLambdaFunction",
-                        "Arn"
-                    ]
-                },
-                "Principal": "apigateway.amazonaws.com",
-                "SourceArn": {
-                    "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/latest-collections"
-                }
-            }
-        },
-        "NGDWrapperApiGatewayInvokeLatestCollection": {
-            "Type": "AWS::Lambda::Permission",
-            "Properties": {
-                "Action": "lambda:InvokeFunction",
-                "FunctionName": {
-                    "Fn::GetAtt": [
-                        "NGDWrapperLambdaFunction",
-                        "Arn"
-                    ]
-                },
-                "Principal": "apigateway.amazonaws.com",
-                "SourceArn": {
-                    "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/latest-collections/*"
-                }
-            }
-        },
-        "NGDWrapperApiGatewayInvokeFeatures": {
-            "Type": "AWS::Lambda::Permission",
-            "Properties": {
-                "Action": "lambda:InvokeFunction",
-                "FunctionName": {
-                    "Fn::GetAtt": [
-                        "NGDWrapperLambdaFunction",
-                        "Arn"
-                    ]
-                },
-                "Principal": "apigateway.amazonaws.com",
-                "SourceArn": {
-                    "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/features/*/*"
-                }
-            }
-        },
-        "NGDWrapperApiGatewayInvokeFeaturesFunction": {
-            "Type": "AWS::Lambda::Permission",
-            "Properties": {
-                "Action": "lambda:InvokeFunction",
-                "FunctionName": {
-                    "Fn::GetAtt": [
-                        "NGDWrapperLambdaFunction",
-                        "Arn"
-                    ]
-                },
-                "Principal": "apigateway.amazonaws.com",
-                "SourceArn": {
-                    "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/features/*/*/*"
-                }
-            }
-        },
-        "ONSGeographiesApiGatewayInvoke": {
-            "Type": "AWS::Lambda::Permission",
-            "Properties": {
-                "Action": "lambda:InvokeFunction",
-                "FunctionName": {
-                    "Fn::GetAtt": [
-                        "ONSGeographiesLambdaFunction",
-                        "Arn"
-                    ]
-                },
-                "Principal": "apigateway.amazonaws.com",
-                "SourceArn": {
-                    "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/ons-geographies/places/*"
-                }
-            }
-        },
-        "ApiGatewayRestApi": {
-            "Type": "AWS::ApiGateway::RestApi",
-            "Properties": {
-                "Name": "Catalyst",
-                "Description": "API Gateway deployment for Geovation Catalyst tools. Deployed through CloudFormation.",
-                "EndpointConfiguration": {
-                    "Types": [
-                        "REGIONAL"
-                    ]
-                }
-            }
-        },
-        "EndpointBase": {
-            "Type": "AWS::ApiGateway::Resource",
-            "Properties": {
-                "ParentId": {
-                    "Fn::GetAtt": [
-                        "ApiGatewayRestApi",
-                        "RootResourceId"
-                    ]
-                },
-                "RestApiId": {
-                    "Ref": "ApiGatewayRestApi"
-                },
-                "PathPart": "catalyst"
-            }
-        },
-        "EndpointONS": {
-            "Type": "AWS::ApiGateway::Resource",
-            "Properties": {
-                "ParentId": {
-                    "Ref": "EndpointBase"
-                },
-                "RestApiId": {
-                    "Ref": "ApiGatewayRestApi"
-                },
-                "PathPart": "ons-geographies"
-            }
-        },
-        "EndpointONSPlaces": {
-            "Type": "AWS::ApiGateway::Resource",
-            "Properties": {
-                "ParentId": {
-                    "Ref": "EndpointONS"
-                },
-                "RestApiId": {
-                    "Ref": "ApiGatewayRestApi"
-                },
-                "PathPart": "places"
-            }
-        },
-        "EndpointONSPlacesOperation": {
-            "Type": "AWS::ApiGateway::Resource",
-            "Properties": {
-                "ParentId": {
-                    "Ref": "EndpointONSPlaces"
-                },
-                "RestApiId": {
-                    "Ref": "ApiGatewayRestApi"
-                },
-                "PathPart": "{operation}"
-            }
-        },
-        "EndpointNGDLatestCollections": {
-            "Type": "AWS::ApiGateway::Resource",
-            "Properties": {
-                "ParentId": {
-                    "Ref": "EndpointBase"
-                },
-                "RestApiId": {
-                    "Ref": "ApiGatewayRestApi"
-                },
-                "PathPart": "latest-collections"
-            }
-        },
-        "EndpointNGDLatestCollectionsCollection": {
-            "Type": "AWS::ApiGateway::Resource",
-            "Properties": {
-                "ParentId": {
-                    "Ref": "EndpointNGDLatestCollections"
-                },
-                "RestApiId": {
-                    "Ref": "ApiGatewayRestApi"
-                },
-                "PathPart": "{collection}"
-            }
-        },
-        "EndpointNGDFeatures": {
-            "Type": "AWS::ApiGateway::Resource",
-            "Properties": {
-                "ParentId": {
-                    "Ref": "EndpointBase"
-                },
-                "RestApiId": {
-                    "Ref": "ApiGatewayRestApi"
-                },
-                "PathPart": "features"
-            }
-        },
-        "EndpointNGDFeaturesCollection": {
-            "Type": "AWS::ApiGateway::Resource",
-            "Properties": {
-                "ParentId": {
-                    "Ref": "EndpointNGDFeatures"
-                },
-                "RestApiId": {
-                    "Ref": "ApiGatewayRestApi"
-                },
-                "PathPart": "{collection}"
-            }
-        },
-        "EndpointNGDFeaturesCollectionItems": {
-            "Type": "AWS::ApiGateway::Resource",
-            "Properties": {
-                "ParentId": {
-                    "Ref": "EndpointNGDFeaturesCollection"
-                },
-                "RestApiId": {
-                    "Ref": "ApiGatewayRestApi"
-                },
-                "PathPart": "items"
-            }
-        },
-        "EndpointNGDFeaturesCollectionItemsFunction": {
-            "Type": "AWS::ApiGateway::Resource",
-            "Properties": {
-                "ParentId": {
-                    "Ref": "EndpointNGDFeaturesCollectionItems"
-                },
-                "RestApiId": {
-                    "Ref": "ApiGatewayRestApi"
-                },
-                "PathPart": "{function}"
-            }
-        },
-        "MethodNGDLatestCollections": {
-            "Type": "AWS::ApiGateway::Method",
-            "Properties": {
-                "ApiKeyRequired": {
-                    "Fn::If": [
-                        "GatewayAuthRequired",
-                        true,
-                        false
-                    ]
-                },
-                "HttpMethod": "GET",
-                "AuthorizationType": "NONE",
-                "ResourceId": {
-                    "Ref": "EndpointNGDLatestCollections"
-                },
-                "RestApiId": {
-                    "Ref": "ApiGatewayRestApi"
-                },
-                "Integration": {
-                    "Type": "AWS_PROXY",
-                    "IntegrationHttpMethod": "POST",
-                    "Uri": {
-                        "Fn::Sub": [
-                            "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations",
-                            {
-                                "lambdaArn": {
-                                    "Fn::GetAtt": [
-                                        "NGDWrapperLambdaFunction",
-                                        "Arn"
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
-        },
-        "MethodNGDLatestCollectionsCollection": {
-            "Type": "AWS::ApiGateway::Method",
-            "Properties": {
-                "ApiKeyRequired": {
-                    "Fn::If": [
-                        "GatewayAuthRequired",
-                        true,
-                        false
-                    ]
-                },
-                "HttpMethod": "GET",
-                "AuthorizationType": "NONE",
-                "ResourceId": {
-                    "Ref": "EndpointNGDLatestCollectionsCollection"
-                },
-                "RestApiId": {
-                    "Ref": "ApiGatewayRestApi"
-                },
-                "Integration": {
-                    "Type": "AWS_PROXY",
-                    "IntegrationHttpMethod": "POST",
-                    "Uri": {
-                        "Fn::Sub": [
-                            "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations",
-                            {
-                                "lambdaArn": {
-                                    "Fn::GetAtt": [
-                                        "NGDWrapperLambdaFunction",
-                                        "Arn"
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
-        },
-        "MethodNGDItems": {
-            "Type": "AWS::ApiGateway::Method",
-            "Properties": {
-                "ApiKeyRequired": {
-                    "Fn::If": [
-                        "GatewayAuthRequired",
-                        true,
-                        false
-                    ]
-                },
-                "HttpMethod": "GET",
-                "AuthorizationType": "NONE",
-                "ResourceId": {
-                    "Ref": "EndpointNGDFeaturesCollectionItems"
-                },
-                "RestApiId": {
-                    "Ref": "ApiGatewayRestApi"
-                },
-                "Integration": {
-                    "Type": "AWS_PROXY",
-                    "IntegrationHttpMethod": "POST",
-                    "Uri": {
-                        "Fn::Sub": [
-                            "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations",
-                            {
-                                "lambdaArn": {
-                                    "Fn::GetAtt": [
-                                        "NGDWrapperLambdaFunction",
-                                        "Arn"
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
-        },
-        "MethodNGDItemsFunction": {
-            "Type": "AWS::ApiGateway::Method",
-            "Properties": {
-                "ApiKeyRequired": {
-                    "Fn::If": [
-                        "GatewayAuthRequired",
-                        true,
-                        false
-                    ]
-                },
-                "HttpMethod": "GET",
-                "AuthorizationType": "NONE",
-                "ResourceId": {
-                    "Ref": "EndpointNGDFeaturesCollectionItemsFunction"
-                },
-                "RestApiId": {
-                    "Ref": "ApiGatewayRestApi"
-                },
-                "Integration": {
-                    "Type": "AWS_PROXY",
-                    "IntegrationHttpMethod": "POST",
-                    "Uri": {
-                        "Fn::Sub": [
-                            "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations",
-                            {
-                                "lambdaArn": {
-                                    "Fn::GetAtt": [
-                                        "NGDWrapperLambdaFunction",
-                                        "Arn"
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
-        },
-        "MethodONS": {
-            "Type": "AWS::ApiGateway::Method",
-            "Properties": {
-                "ApiKeyRequired": {
-                    "Fn::If": [
-                        "GatewayAuthRequired",
-                        true,
-                        false
-                    ]
-                },
-                "HttpMethod": "GET",
-                "AuthorizationType": "NONE",
-                "ResourceId": {
-                    "Ref": "EndpointONSPlacesOperation"
-                },
-                "RestApiId": {
-                    "Ref": "ApiGatewayRestApi"
-                },
-                "Integration": {
-                    "Type": "AWS_PROXY",
-                    "IntegrationHttpMethod": "POST",
-                    "Uri": {
-                        "Fn::Sub": [
-                            "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations",
-                            {
-                                "lambdaArn": {
-                                    "Fn::GetAtt": [
-                                        "ONSGeographiesLambdaFunction",
-                                        "Arn"
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
-        },
-        "ApiGatewayDeployment": {
-            "Type": "AWS::ApiGateway::Deployment",
-            "DependsOn": [
-                "MethodNGDLatestCollections",
-                "MethodNGDLatestCollectionsCollection",
-                "MethodNGDItems",
-                "MethodNGDItemsFunction",
-                "MethodONS"
-            ],
-            "Properties": {
-                "RestApiId": {
-                    "Ref": "ApiGatewayRestApi"
-                },
-                "StageName": {
-                    "Ref": "ApiGatewayStageName"
-                },
-                "Description": "CatalyST API Gateway Deployment"
-            }
-        },
-        "UsagePlan": {
-            "Type": "AWS::ApiGateway::UsagePlan",
-            "Condition": "GatewayAuthRequired",
-            "DependsOn": "ApiGatewayDeployment",
-            "Properties": {
-                "Description": "Usage plan for the Catalyst API",
-                "ApiStages": [
-                    {
-                        "ApiId": {
-                            "Ref": "ApiGatewayRestApi"
-                        },
-                        "Stage": {
-                            "Ref": "ApiGatewayStageName"
-                        }
-                    }
-                ],
-                "UsagePlanName": "CatalystUsagePlan"
-            }
-        },
-        "ApiKey": {
-            "Type": "AWS::ApiGateway::ApiKey",
-            "Condition": "GatewayAuthRequired",
-            "Description": "API Key for the Catalyst API",
-            "Properties": {
-                "Description": "API Key",
-                "Name": {
-                    "Ref": "ApiKeyName"
-                },
-                "Enabled": true
-            }
-        },
-        "UsagePlanKey": {
-            "Type": "AWS::ApiGateway::UsagePlanKey",
-            "Condition": "GatewayAuthRequired",
-            "Description": "Usage plan key for the Catalyst API",
-            "Properties": {
-                "KeyId": {
-                    "Ref": "ApiKey"
-                },
-                "KeyType": "API_KEY",
-                "UsagePlanId": {
-                    "Ref": "UsagePlan"
-                }
-            }
+      ]
+    }
+  },
+  "Resources": {
+    "LambdaBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": {
+          "Ref": "S3BucketName"
         }
+      }
     },
-    "Outputs": {
-        "apiGatewayInvokeURL": {
-            "Value": {
-                "Fn::Sub": "https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiGatewayStageName}/"
+    "InitFunctionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "S3WriteDeletePolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:PutObject",
+                    "s3:DeleteObject"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "${LambdaBucket.Arn}/*"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "PolicyName": "CloudWatchLogsPolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "InitFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "FunctionName": "CatalystInitFunction",
+        "Description": "Populates S3 bucket with the NGD Wrapper code, or cleans up (ie. deletes) if requested.",
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "InitFunctionRole",
+            "Arn"
+          ]
+        },
+        "Runtime": "python3.13",
+        "MemorySize": 512,
+        "Timeout": 300,
+        "Code": {
+          "ZipFile": "import json\nimport urllib.request\nimport boto3\nimport logging\n\nlogger = logging.getLogger()\nlogger.setLevel(logging.INFO)\n\nngd_wrappers_url = \"https://github.com/Geovation/catalyst-ngd-wrappers-aws/releases/latest/download/aws_lambda_release.zip\"\nons_geographies_url = \"https://github.com/Geovation/catalyst-ons-geographies-aws/releases/latest/download/aws_lambda_release.zip\"\nons_geographies_db_url = \"https://github.com/Geovation/catalyst-ons-geographies-db/releases/latest/download/ons_postcodes.duckdb\"\n\ndef send_response(event, context, status, reason=None):\n    response_body = {\n        'Status': status,\n        'Reason': reason or 'See the details in CloudWatch Log Stream: ' + context.log_stream_name,\n        'PhysicalResourceId': context.log_stream_name,\n        'StackId': event['StackId'],\n        'RequestId': event['RequestId'],\n        'LogicalResourceId': event['LogicalResourceId'],\n        'Data': {}\n    }\n\n    response_url = event['ResponseURL']\n    json_response_body = json.dumps(response_body).encode('utf-8')\n\n    try:\n        req = urllib.request.Request(\n            url=response_url,\n            data=json_response_body,\n            method='PUT',\n            headers={\n                'Content-Type': '',\n                'Content-Length': str(len(json_response_body))\n            }\n        )\n        with urllib.request.urlopen(req) as response:\n            logger.info(f\"CloudFormation response status: {response.status}\")\n    except Exception as e:\n        logger.error(f\"Failed to send response: {str(e)}\")\n\ndef handler(event, context):\n    logger.info(f\"Received event: {json.dumps(event)}\")\n\n    try:\n        s3 = boto3.client('s3')\n        bucket = event['ResourceProperties']['BucketName']\n        ngd_key = event['ResourceProperties'].get('NGDKeyName', 'ngd_wrappers_lambda.zip')\n        ons_key = event['ResourceProperties'].get('ONSKeyName', 'ons_geographies_lambda.zip')\n        ons_db_key = event['ResourceProperties'].get('ONSDBKeyName', 'ons_geographies_db.duckdb')\n        cleanup = event['ResourceProperties'].get('Cleanup', False)\n\n        if event['RequestType'] in ['Create', 'Update']:\n            if cleanup:\n                logger.info(\"Delete request received, removing S3 objects.\")\n                s3.delete_object(\n                    Bucket=bucket,\n                    Key=ngd_key\n                )\n                logger.info(f\"Deleted {ngd_key} from bucket {bucket}.\")\n                s3.delete_object(\n                    Bucket=bucket,\n                    Key=ons_key\n                )\n                logger.info(f\"Deleted {ons_key} from bucket {bucket}.\")\n            else:\n                response = urllib.request.urlopen(ons_geographies_db_url)\n                db_data = response.read()\n                s3.put_object(\n                    Bucket=bucket,\n                    Key=ons_db_key,\n                    Body=db_data\n                )\n                logger.info(f\"Uploaded {ons_db_key} to bucket {bucket}.\")\n                response = urllib.request.urlopen(ngd_wrappers_url)\n                zip_data = response.read()\n                s3.put_object(\n                    Bucket=bucket,\n                    Key=ngd_key,\n                    Body=zip_data\n                )\n                del response, zip_data  # Free memory\n                logger.info(f\"Uploaded {ngd_key} to bucket {bucket}.\")\n                response = urllib.request.urlopen(ons_geographies_url)\n                zip_data = response.read()\n                s3.put_object(\n                    Bucket=bucket,\n                    Key=ons_key,\n                    Body=zip_data\n                )\n                logger.info(f\"Uploaded {ons_key} to bucket {bucket}.\")\n        send_response(event, context, \"SUCCESS\")\n\n    except Exception as e:\n        logger.error(f\"Error: {str(e)}\")\n        send_response(event, context, \"FAILED\", reason=str(e))\n"
+        }
+      }
+    },
+    "Initialize": {
+      "Type": "Custom::InitFunction",
+      "DependsOn": [
+        "LambdaBucket",
+        "InitFunction"
+      ],
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "InitFunction",
+            "Arn"
+          ]
+        },
+        "BucketName": {
+          "Ref": "LambdaBucket"
+        },
+        "NGDKeyName": "ngd_wrappers_lambda.zip",
+        "ONSKeyName": "ons_geographies_lambda.zip",
+        "ONSDBKeyName": "ons_geographies_db.duckdb"
+      }
+    },
+    "NGDWrapperLambdaRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "Lambda-NGDWrapper-Role",
+        "Description": "An execution role for the NGD Wrapper Lambda function",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "NGDWrapperLambdaPolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Action": "lambda:InvokeFunction",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${NGDWrapperLambdaFunctionName}"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "PolicyName": "NGDWrapperCloudWatchPolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "NGDWrapperLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "DependsOn": [
+        "Initialize",
+        "NGDWrapperLambdaRole"
+      ],
+      "Properties": {
+        "Description": "Provides a wrapper for the NGD API",
+        "FunctionName": {
+          "Ref": "NGDWrapperLambdaFunctionName"
+        },
+        "Handler": "lambda_function.lambda_handler",
+        "MemorySize": 128,
+        "Runtime": "python3.13",
+        "Role": {
+          "Fn::GetAtt": [
+            "NGDWrapperLambdaRole",
+            "Arn"
+          ]
+        },
+        "Timeout": 240,
+        "Environment": {
+          "Variables": {
+            "CLIENT_ID": {
+              "Ref": "OSDataHubProjectKey"
             },
-            "Description": "The URL to invoke the API Gateway endpoint"
+            "CLIENT_SECRET": {
+              "Ref": "OSDataHubProjectSecret"
+            },
+            "ROOT_URL": {
+              "Fn::Sub": "https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiGatewayStageName}"
+            }
+          }
         },
-        "NGDWrapperLambdaFunctionArn": {
-            "Value": {
-                "Fn::GetAtt": [
+        "PackageType": "Zip",
+        "Code": {
+          "S3Bucket": {
+            "Ref": "LambdaBucket"
+          },
+          "S3Key": "ngd_wrappers_lambda.zip"
+        }
+      }
+    },
+    "ONSGeographiesLambdaRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "Lambda-ONSGeographies-Role",
+        "Description": "An execution role for the ONS Geographies Proxy",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "ONSGeographiesLambdaPolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Action": "lambda:InvokeFunction",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${ONSGeographiesLambdaFunctionName}"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "PolicyName": "ONSGeographiesCloudWatchPolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "ONSGeographiesLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "DependsOn": [
+        "Initialize",
+        "ONSGeographiesLambdaRole"
+      ],
+      "Properties": {
+        "Description": "Proxy for the ONS Geographies Proxy",
+        "FunctionName": {
+          "Ref": "ONSGeographiesLambdaFunctionName"
+        },
+        "Handler": "lambda_function.lambda_handler",
+        "MemorySize": 128,
+        "Runtime": "python3.13",
+        "Role": {
+          "Fn::GetAtt": [
+            "ONSGeographiesLambdaRole",
+            "Arn"
+          ]
+        },
+        "Timeout": 240,
+        "Environment": {
+          "Variables": {
+            "ONSGEOGRAPHY_DB_BUCKET": {
+              "Ref": "S3BucketName"
+            },
+            "ONSGEOGRAPHY_DB_FILE": {
+              "Ref": "ONSGeographyDBFilePath"
+            }
+          }
+        },
+        "PackageType": "Zip",
+        "Code": {
+          "S3Bucket": {
+            "Ref": "LambdaBucket"
+          },
+          "S3Key": "ons_geographies_lambda.zip"
+        }
+      }
+    },
+    "CleanupBootstrapLambda": {
+      "Type": "Custom::InitFunction",
+      "DependsOn": [
+        "NGDWrapperLambdaFunction",
+        "ONSGeographiesLambdaFunction"
+      ],
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "InitFunction",
+            "Arn"
+          ]
+        },
+        "BucketName": {
+          "Ref": "LambdaBucket"
+        },
+        "NGDKeyName": "ngd_wrappers_lambda.zip",
+        "ONSKeyName": "ons_geographies_lambda.zip",
+        "Cleanup": true
+      }
+    },
+    "NGDWrapperApiGatewayInvokeLatest": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "NGDWrapperLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/latest-collections"
+        }
+      }
+    },
+    "NGDWrapperApiGatewayInvokeLatestCollection": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "NGDWrapperLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/latest-collections/*"
+        }
+      }
+    },
+    "NGDWrapperApiGatewayInvokeFeatures": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "NGDWrapperLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/features/*/*"
+        }
+      }
+    },
+    "NGDWrapperApiGatewayInvokeFeaturesFunction": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "NGDWrapperLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/features/*/*/*"
+        }
+      }
+    },
+    "ONSGeographiesApiGatewayInvoke": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ONSGeographiesLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${ApiGatewayStageName}/GET/catalyst/ons-geographies/places/*"
+        }
+      }
+    },
+    "ApiGatewayRestApi": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": {
+        "Name": "Catalyst",
+        "Description": "API Gateway deployment for Geovation Catalyst tools. Deployed through CloudFormation.",
+        "EndpointConfiguration": {
+          "Types": [
+            "REGIONAL"
+          ]
+        }
+      }
+    },
+    "EndpointBase": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "ApiGatewayRestApi",
+            "RootResourceId"
+          ]
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "PathPart": "catalyst"
+      }
+    },
+    "EndpointONS": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Ref": "EndpointBase"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "PathPart": "ons-geographies"
+      }
+    },
+    "EndpointONSPlaces": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Ref": "EndpointONS"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "PathPart": "places"
+      }
+    },
+    "EndpointONSPlacesOperation": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Ref": "EndpointONSPlaces"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "PathPart": "{operation}"
+      }
+    },
+    "EndpointNGDLatestCollections": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Ref": "EndpointBase"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "PathPart": "latest-collections"
+      }
+    },
+    "EndpointNGDLatestCollectionsCollection": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Ref": "EndpointNGDLatestCollections"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "PathPart": "{collection}"
+      }
+    },
+    "EndpointNGDFeatures": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Ref": "EndpointBase"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "PathPart": "features"
+      }
+    },
+    "EndpointNGDFeaturesCollection": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Ref": "EndpointNGDFeatures"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "PathPart": "{collection}"
+      }
+    },
+    "EndpointNGDFeaturesCollectionItems": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Ref": "EndpointNGDFeaturesCollection"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "PathPart": "items"
+      }
+    },
+    "EndpointNGDFeaturesCollectionItemsFunction": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Ref": "EndpointNGDFeaturesCollectionItems"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "PathPart": "{function}"
+      }
+    },
+    "MethodNGDLatestCollections": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "ApiKeyRequired": {
+          "Fn::If": [
+            "GatewayAuthRequired",
+            true,
+            false
+          ]
+        },
+        "HttpMethod": "GET",
+        "AuthorizationType": "NONE",
+        "ResourceId": {
+          "Ref": "EndpointNGDLatestCollections"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "Integration": {
+          "Type": "AWS_PROXY",
+          "IntegrationHttpMethod": "POST",
+          "Uri": {
+            "Fn::Sub": [
+              "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations",
+              {
+                "lambdaArn": {
+                  "Fn::GetAtt": [
                     "NGDWrapperLambdaFunction",
                     "Arn"
-                ]
-            },
-            "Description": "The ARN of the Lambda function"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "MethodNGDLatestCollectionsCollection": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "ApiKeyRequired": {
+          "Fn::If": [
+            "GatewayAuthRequired",
+            true,
+            false
+          ]
         },
-        "ONSGeographiesLambdaFunctionArn": {
-            "Value": {
-                "Fn::GetAtt": [
+        "HttpMethod": "GET",
+        "AuthorizationType": "NONE",
+        "ResourceId": {
+          "Ref": "EndpointNGDLatestCollectionsCollection"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "Integration": {
+          "Type": "AWS_PROXY",
+          "IntegrationHttpMethod": "POST",
+          "Uri": {
+            "Fn::Sub": [
+              "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations",
+              {
+                "lambdaArn": {
+                  "Fn::GetAtt": [
+                    "NGDWrapperLambdaFunction",
+                    "Arn"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "MethodNGDItems": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "ApiKeyRequired": {
+          "Fn::If": [
+            "GatewayAuthRequired",
+            true,
+            false
+          ]
+        },
+        "HttpMethod": "GET",
+        "AuthorizationType": "NONE",
+        "ResourceId": {
+          "Ref": "EndpointNGDFeaturesCollectionItems"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "Integration": {
+          "Type": "AWS_PROXY",
+          "IntegrationHttpMethod": "POST",
+          "Uri": {
+            "Fn::Sub": [
+              "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations",
+              {
+                "lambdaArn": {
+                  "Fn::GetAtt": [
+                    "NGDWrapperLambdaFunction",
+                    "Arn"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "MethodNGDItemsFunction": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "ApiKeyRequired": {
+          "Fn::If": [
+            "GatewayAuthRequired",
+            true,
+            false
+          ]
+        },
+        "HttpMethod": "GET",
+        "AuthorizationType": "NONE",
+        "ResourceId": {
+          "Ref": "EndpointNGDFeaturesCollectionItemsFunction"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "Integration": {
+          "Type": "AWS_PROXY",
+          "IntegrationHttpMethod": "POST",
+          "Uri": {
+            "Fn::Sub": [
+              "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations",
+              {
+                "lambdaArn": {
+                  "Fn::GetAtt": [
+                    "NGDWrapperLambdaFunction",
+                    "Arn"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "MethodONS": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "ApiKeyRequired": {
+          "Fn::If": [
+            "GatewayAuthRequired",
+            true,
+            false
+          ]
+        },
+        "HttpMethod": "GET",
+        "AuthorizationType": "NONE",
+        "ResourceId": {
+          "Ref": "EndpointONSPlacesOperation"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "Integration": {
+          "Type": "AWS_PROXY",
+          "IntegrationHttpMethod": "POST",
+          "Uri": {
+            "Fn::Sub": [
+              "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations",
+              {
+                "lambdaArn": {
+                  "Fn::GetAtt": [
                     "ONSGeographiesLambdaFunction",
                     "Arn"
-                ]
-            },
-            "Description": "The ARN of the ONS Geographies Lambda function"
+                  ]
+                }
+              }
+            ]
+          }
         }
+      }
+    },
+    "ApiGatewayDeployment": {
+      "Type": "AWS::ApiGateway::Deployment",
+      "DependsOn": [
+        "MethodNGDLatestCollections",
+        "MethodNGDLatestCollectionsCollection",
+        "MethodNGDItems",
+        "MethodNGDItemsFunction",
+        "MethodONS"
+      ],
+      "Properties": {
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "StageName": {
+          "Ref": "ApiGatewayStageName"
+        },
+        "Description": "CatalyST API Gateway Deployment"
+      }
+    },
+    "UsagePlan": {
+      "Type": "AWS::ApiGateway::UsagePlan",
+      "Condition": "GatewayAuthRequired",
+      "DependsOn": "ApiGatewayDeployment",
+      "Properties": {
+        "Description": "Usage plan for the Catalyst API",
+        "ApiStages": [
+          {
+            "ApiId": {
+              "Ref": "ApiGatewayRestApi"
+            },
+            "Stage": {
+              "Ref": "ApiGatewayStageName"
+            }
+          }
+        ],
+        "UsagePlanName": "CatalystUsagePlan"
+      }
+    },
+    "ApiKey": {
+      "Type": "AWS::ApiGateway::ApiKey",
+      "Condition": "GatewayAuthRequired",
+      "Description": "API Key for the Catalyst API",
+      "Properties": {
+        "Description": "API Key",
+        "Name": {
+          "Ref": "ApiKeyName"
+        },
+        "Enabled": true
+      }
+    },
+    "UsagePlanKey": {
+      "Type": "AWS::ApiGateway::UsagePlanKey",
+      "Condition": "GatewayAuthRequired",
+      "Description": "Usage plan key for the Catalyst API",
+      "Properties": {
+        "KeyId": {
+          "Ref": "ApiKey"
+        },
+        "KeyType": "API_KEY",
+        "UsagePlanId": {
+          "Ref": "UsagePlan"
+        }
+      }
     }
+  },
+  "Outputs": {
+    "apiGatewayInvokeURL": {
+      "Value": {
+        "Fn::Sub": "https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiGatewayStageName}/"
+      },
+      "Description": "The URL to invoke the API Gateway endpoint"
+    },
+    "NGDWrapperLambdaFunctionArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "NGDWrapperLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Description": "The ARN of the Lambda function"
+    },
+    "ONSGeographiesLambdaFunctionArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "ONSGeographiesLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Description": "The ARN of the ONS Geographies Lambda function"
+    }
+  }
 }
