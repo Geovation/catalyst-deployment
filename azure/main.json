@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "17341775329966356493"
+      "templateHash": "11655656076233068673"
     }
   },
   "parameters": {
@@ -224,7 +224,6 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Insights/components', variables('ngdWrapperInsightsName'))]",
         "[resourceId('Microsoft.Web/serverfarms', variables('ngdWrapperServicePlanName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('ngdWrapperStoreName'))]"
       ]
@@ -299,12 +298,25 @@
         "packageUri": "[variables('onsGeographiesFunctionsPackageUri')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites/extensions', variables('ngdWrapperFunctionName'), 'zipdeploy')]",
         "[resourceId('Microsoft.Web/sites', variables('onsGeographiesFunctionName'))]"
       ]
     }
   ],
   "outputs": {
+    "onsGeographiesFunctionAppUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Outputs the Function App URL for the ONS Geographies function"
+      },
+      "value": "[format('https://{0}/api', reference(resourceId('Microsoft.Web/sites', variables('onsGeographiesFunctionName')), '2024-04-01').defaultHostName)]"
+    },
+    "ngdWrapperFunctionAppUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Outputs the Function App URL for the NGD Wrapper function"
+      },
+      "value": "[format('https://{0}/api', reference(resourceId('Microsoft.Web/sites', variables('ngdWrapperFunctionName')), '2024-04-01').defaultHostName)]"
+    },
     "logAnalyticsWorkspaceId": {
       "type": "string",
       "metadata": {
