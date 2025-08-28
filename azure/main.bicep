@@ -20,10 +20,8 @@ param osDataHubProjectApiKey string = ''
 @secure()
 param osDataHubProjectSecret string = ''
 
-// FOR LOGGING
 var logAnalyticsName = toLower('${workspaceName}-log-analytics-t')
 
-// SETTING VARIOUS HIGHER LEVEL PARAMS
 var onsGeographiesServicePlanName = '${onsGeographiesName}-serviceplan'
 var onsGeographiesFunctionName = '${onsGeographiesName}-function'
 var onsGeographiesStoreName = replace(toLower('${onsGeographiesName}store'), '-', '')
@@ -35,14 +33,6 @@ var ngdWrapperFunctionName = '${ngdWrapperName}-function'
 var ngdWrapperStoreName = replace(toLower('${ngdWrapperName}store'), '-', '')
 var ngdWrapperInsightsName = '${ngdWrapperName}-insights'
 var ngdWrapperFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/azure_function_release_.zip'
-
-// VARIOUS RESOURCES
-// Log Analytics Workspace x1
-// --Zip deployments x2
-// Storage x2
-// Service Plans x2
-// App Insights x2
-// Function App x2
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' = {
   name: logAnalyticsName
@@ -154,6 +144,10 @@ resource ngdWrapperFunctionApp 'Microsoft.Web/sites@2024-04-01' = {
         {
           name: 'OS_DATAHUB_PROJECT_SECRET'
           value: osDataHubProjectSecret
+        }
+        {
+          name: 'ROOT_URL'
+          value: 'https://${ngdWrapperFunctionName}.azurewebsites.net/api'
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
