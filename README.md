@@ -22,7 +22,9 @@ Azure deployment has been written using [Azure Resource Manager (ARM)](https://l
 
 ### Permissions
 
-You will need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
+To deploy this template in Microsoft Azure, appropriate Azure role-based access control (RBAC) permissions must be configured. Specifically, the user (or other security principal: group/service principal/managed ideneity) needs permissions to create and manage Azure resources via Azure Resource Manager (ARM), eg. Microsoft.Resources/deployments/*. Additionally, users must have specific relevant [Microsoft.Storage, Microsoft.Web, Microsoft.insights, and Microsoft.OperationalInsights permissions](https://learn.microsoft.com/en-us/azure/role-based-access-control/resource-provider-operations) as these are required in the template. These permissions can be granted by assigning built-in roles or custom roles to users(/security principals) through the Azure portal or CLI. The roles must be either at the Contributor or Owner level with a scope covering the resource group, or the subscription/management group to which it belongs. Read more about RBAC access control [here](https://learn.microsoft.com/en-us/azure/role-based-access-control/overview).
+
+You will also need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
 
 ### Method 1: Azure Portal
 
@@ -58,6 +60,8 @@ The code below can run either locally, or through a Cloud Shell terminal on the 
 - The other parameters which can be set are _workspaceName_ and _location_.
 
 ```
+az login
+...
 az deployment group create
     --resource-group <your-resource-group>
     --template-file path/to/main.bicep
@@ -112,17 +116,9 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
 
 ### Permissions
 
-- You will require the following AWS perissions:
-    - cloudformation:CreateStack
-    - cloudformation:UpdateStack
-    - cloudformation:DeleteStack
-    - s3:PutObject
-    - s3:DeleteObject
-    - lambda:InvokeFunction
-    - logs:CreateLogGroup
-    - logs:CreateLogStream
-    - logs:PutLogEvents
-- You will also need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
+To deploy this CloudFormation template, the appropriate AWS Identity and Access Management (IAM) permissions must be configured for the relevant user (or role/group). Specifically, permissions to create and manage CloudFormation stacks such as cloudformation:CreateStack, cloudformation:UpdateStack, and cloudformation:DescribeStacks are required. Additionally, users must have all the [iam, s3, lambda, apigateway, and logs permissions](https://docs.aws.amazon.com/service-authorization/latest/reference/reference_policies_actions-resources-contextkeys.html#context_keys_table) required to create, modify, or delete the AWS resources defined within the template. This can by acheived by adding the relevant policies to users (or groups/roles) in the [IAM console](https://us-east-1.console.aws.amazon.com/iam/home?region=eu-west-2#/users).
+
+You will also need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
 
 ### Method 1 CloudFormation Console
 
@@ -137,6 +133,10 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
 
 ### Method 2: AWS CLI
 
+The code below can run either locally, or through a CloudShell terminal on the AWS portral, accessible through the Cloud Shell icon (`>_`) in the header panel at the top right of the page.
+
+- If you use a local terminal, you must first login with `aws configure`, and entering a number from the listed subscriptions.
+- If you use the CloudShell terminal, you must first select 'Actions'>'Upload file' and upload the yaml or json code.
 - Find further details and parameters [here](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html).
 - In addition to the three example parameters given below, other parameters can be modified from their defaults:
     - NGDWrapperLambdaFunctionName
@@ -144,6 +144,7 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
     - ApiGatewayStageName
     - S3BucketName
     - ONSGeographyDBFilePath
+
 
 ```
 aws configure
