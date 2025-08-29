@@ -58,6 +58,8 @@ The code below can run either locally, or through a Cloud Shell terminal on the 
 - The other parameters which can be set are _workspaceName_ and _location_.
 
 ```
+az login
+...
 az deployment group create
     --resource-group <your-resource-group>
     --template-file path/to/main.bicep
@@ -137,6 +139,10 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
 
 ### Method 2: AWS CLI
 
+The code below can run either locally, or through a CloudShell terminal on the AWS portral, accessible through the Cloud Shell icon (`>_`) in the header panel at the top right of the page.
+
+- If you use a local terminal, you must first login with `aws configure`, and entering a number from the listed subscriptions.
+- If you use the CloudShell terminal, you must first select 'Actions'>'Upload file' and upload the yaml or json code.
 - Find further details and parameters [here](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html).
 - In addition to the three example parameters given below, other parameters can be modified from their defaults:
     - NGDWrapperLambdaFunctionName
@@ -144,6 +150,7 @@ AWS deployment has been written using [CloudFormation templates](https://aws.ama
     - ApiGatewayStageName
     - S3BucketName
     - ONSGeographyDBFilePath
+
 
 ```
 aws configure
