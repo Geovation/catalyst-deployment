@@ -26,13 +26,13 @@ var onsGeographiesServicePlanName = '${onsGeographiesName}-serviceplan'
 var onsGeographiesFunctionName = '${onsGeographiesName}-function'
 var onsGeographiesStoreName = replace(toLower('${onsGeographiesName}store'), '-', '')
 var onsGeographiesInsightsName = '${onsGeographiesName}-insights'
-var onsGeographiesFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ons-geographies-azure/releases/latest/download/azure_function_release_.zip'
+var onsGeographiesFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ons-geographies-azure/releases/latest/download/azure_function_release.zip'
 
 var ngdWrapperServicePlanName = '${ngdWrapperName}-serviceplan'
 var ngdWrapperFunctionName = '${ngdWrapperName}-function'
 var ngdWrapperStoreName = replace(toLower('${ngdWrapperName}store'), '-', '')
 var ngdWrapperInsightsName = '${ngdWrapperName}-insights'
-var ngdWrapperFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/azure_function_release_.zip'
+var ngdWrapperFunctionsPackageUri = 'https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/azure_function_release.zip'
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' = {
   name: logAnalyticsName

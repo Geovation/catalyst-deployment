@@ -58,12 +58,12 @@
     "onsGeographiesFunctionName": "[format('{0}-function', parameters('onsGeographiesName'))]",
     "onsGeographiesStoreName": "[replace(toLower(format('{0}store', parameters('onsGeographiesName'))), '-', '')]",
     "onsGeographiesInsightsName": "[format('{0}-insights', parameters('onsGeographiesName'))]",
-    "onsGeographiesFunctionsPackageUri": "https://github.com/Geovation/catalyst-ons-geographies-azure/releases/latest/download/azure_function_release_.zip",
+    "onsGeographiesFunctionsPackageUri": "https://github.com/Geovation/catalyst-ons-geographies-azure/releases/latest/download/azure_function_release.zip",
     "ngdWrapperServicePlanName": "[format('{0}-serviceplan', parameters('ngdWrapperName'))]",
     "ngdWrapperFunctionName": "[format('{0}-function', parameters('ngdWrapperName'))]",
     "ngdWrapperStoreName": "[replace(toLower(format('{0}store', parameters('ngdWrapperName'))), '-', '')]",
     "ngdWrapperInsightsName": "[format('{0}-insights', parameters('ngdWrapperName'))]",
-    "ngdWrapperFunctionsPackageUri": "https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/azure_function_release_.zip"
+    "ngdWrapperFunctionsPackageUri": "https://github.com/Geovation/catalyst-ngd-wrappers-azure/releases/latest/download/azure_function_release.zip"
   },
   "resources": [
     {
