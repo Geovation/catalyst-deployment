@@ -3,20 +3,20 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >
   Catalyst tool deployment on AWS. Includes Lambda functions and an endpoints deployed through API Gateway.
 Parameters:
-  NGDWrapperLambdaFunctionName:
+  NGDWrapperName:
     Type: String
     MinLength: 1
     MaxLength: 64
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
-    Description: The name of the NGD Wrapper Lambda function
-    Default: Lambda-NGDWrapper
-  ONSGeographiesLambdaFunctionName:
+    Description: The base name for resources associated with the NGD Wrapper
+    Default: NGDWrapper
+  ONSGeographiesName:
     Type: String
     MinLength: 1
     MaxLength: 64
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
-    Description: The name of the ONS Geographies Lambda function
-    Default: Lambda-ONSGeographies
+    Description: The base name for resources associated with the ONS Geographies proxy
+    Default: ONSGeographies
   ApiGatewayStageName:
     Type: String
     MinLength: 1
@@ -36,7 +36,7 @@ Parameters:
     MinLength: 1
     MaxLength: 64
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9._-]*"
-    Description: The name of the ONS Geography database file
+    Description: The name of the ONS Geography database file/filepath in the S3 bucket
     Default: ons_postcodes.duckdb
   OSDataHubProjectKey:
     Type: String
@@ -247,7 +247,7 @@ Resources:
             Statement:
               - Action: "lambda:InvokeFunction"
                 Effect: Allow
-                Resource: !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${NGDWrapperLambdaFunctionName}"
+                Resource: !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${NGDWrapperName}-Function"
         - PolicyName: NGDWrapperCloudWatchPolicy
           PolicyDocument:
             Version: "2012-10-17"
@@ -266,7 +266,7 @@ Resources:
       - NGDWrapperLambdaRole
     Properties:
       Description: Provides a wrapper for the NGD API
-      FunctionName: !Ref NGDWrapperLambdaFunctionName
+      FunctionName: !Sub ${NGDWrapperName}-Function
       Handler: lambda_function.lambda_handler
       MemorySize: 128
       Runtime: python3.13
@@ -301,7 +301,7 @@ Resources:
             Statement:
               - Action: "lambda:InvokeFunction"
                 Effect: Allow
-                Resource: !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${ONSGeographiesLambdaFunctionName}"
+                Resource: !Sub "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${ONSGeographiesName}-Function"
         - PolicyName: ONSGeographiesCloudWatchPolicy
           PolicyDocument:
             Version: 2012-10-17
@@ -320,7 +320,7 @@ Resources:
       - ONSGeographiesLambdaRole
     Properties:
       Description: Proxy for the ONS Geographies Proxy
-      FunctionName: !Ref ONSGeographiesLambdaFunctionName
+      FunctionName: !Sub ${ONSGeographiesName}-Function
       Handler: lambda_function.lambda_handler
       MemorySize: 128
       Runtime: python3.13
