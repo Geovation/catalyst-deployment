@@ -173,7 +173,9 @@
         "InitFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
-                "FunctionName": "CatalystInitFunction",
+                "FunctionName": {
+                    "Fn::Sub": "${ONSGeographiesName}-InitFunction"
+                },
                 "Description": "Populates S3 bucket with the NGD Wrapper code, or cleans up (ie. deletes) if requested.",
                 "Handler": "index.handler",
                 "Role": {
