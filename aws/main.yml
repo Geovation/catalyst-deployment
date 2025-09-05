@@ -283,7 +283,6 @@ Resources:
         Variables:
           CLIENT_ID: !Ref OSDataHubProjectKey
           CLIENT_SECRET: !Ref OSDataHubProjectSecret
-          ROOT_URL: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiGatewayStageName}
       PackageType: Zip
       Code:
         S3Bucket: !Ref LambdaBucket

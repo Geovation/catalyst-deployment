@@ -146,10 +146,6 @@ resource ngdWrapperFunctionApp 'Microsoft.Web/sites@2024-04-01' = {
           value: osDataHubProjectSecret
         }
         {
-          name: 'ROOT_URL'
-          value: 'https://${ngdWrapperFunctionName}.azurewebsites.net/api'
-        }
-        {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
           value: reference(resourceId('Microsoft.Insights/components', ngdWrapperInsightsName), '2015-05-01').InstrumentationKey
         }

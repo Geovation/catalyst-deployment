@@ -298,9 +298,6 @@
                         },
                         "CLIENT_SECRET": {
                             "Ref": "OSDataHubProjectSecret"
-                        },
-                        "ROOT_URL": {
-                            "Fn::Sub": "https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiGatewayStageName}"
                         }
                     }
                 },
