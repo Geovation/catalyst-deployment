@@ -174,9 +174,9 @@
             "Type": "AWS::Lambda::Function",
             "Properties": {
                 "FunctionName": {
-                    "Fn::Sub": "${ONSGeographiesName}-InitFunction"
+                    "Fn::Sub": "${AWS::StackName}-InitFunction"
                 },
-                "Description": "Populates S3 bucket with the NGD Wrapper code, or cleans up (ie. deletes) if requested.",
+                "Description": "Populates S3 bucket with the NGD Wrapper and ONS Geographies code, or cleans up (ie. deletes) if requested.",
                 "Handler": "index.handler",
                 "Role": {
                     "Fn::GetAtt": [
