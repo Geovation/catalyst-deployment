@@ -22,9 +22,9 @@ Azure deployment has been written using [Azure Resource Manager (ARM)](https://l
 
 ### Permissions
 
-To deploy this template in Microsoft Azure, appropriate Azure role-based access control (RBAC) permissions must be configured. Specifically, the user (or other security principal ie. group, service principal, managed identity) needs permissions to create and manage Azure resources via Azure Resource Manager (ARM), eg. Microsoft.Resources/deployments/*. Additionally, specific relevant [Microsoft.Storage, Microsoft.Web, Microsoft.insights, and Microsoft.OperationalInsights permissions](https://learn.microsoft.com/en-us/azure/role-based-access-control/resource-provider-operations) must be assigned as these are required in the template.
+To deploy this template in Microsoft Azure, appropriate Azure role-based access control (RBAC) permissions must be configured. Specifically, the user (or other security principal ie. group, service principal, managed identity) needs permissions to create and manage Azure resources via Azure Resource Manager (ARM) eg. Microsoft.Resources/deployments/*. Additionally, specific relevant [Microsoft.Storage, Microsoft.Web, Microsoft.insights, and Microsoft.OperationalInsights permissions](https://learn.microsoft.com/en-us/azure/role-based-access-control/resource-provider-operations) must be assigned as these are required in the template.
 
-These permissions can be granted by assigning roles to users (or other security principals) [from the 'Access Control (IAM)' of the relevant scope resouce on the Azure portal](https://learn.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal), or through the CLI. The roles must be either at the Contributor or Owner level. The scope must be set to the resource group itself, or to the subscription or management group to which it belongs. Read more about RBAC access control [here](https://learn.microsoft.com/en-us/azure/role-based-access-control/overview).
+These permissions can be granted by assigning roles to users (or other security principals) [from the 'Access Control (IAM)' tab of the relevant scope resouce on the Azure portal](https://learn.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal), or through the CLI. The roles must be either at the Contributor or Owner level. The scope must be set to the resource group itself, or to the subscription or management group to which it belongs. Read more about RBAC access control [here](https://learn.microsoft.com/en-us/azure/role-based-access-control/overview).
 
 You will also need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
 
@@ -124,7 +124,7 @@ This can by acheived by adding the relevant policies to users (or groups/roles) 
 
 You will also need to create a project on the [OS DataHub](https://osdatahub.os.uk/projects), and ensure that OS NGD API - Features is added to the project.
 
-### Method 1 CloudFormation Console
+### Method 1: CloudFormation Console
 
 1. Go to the [CloudFormation console](https://eu-west-2.console.aws.amazon.com/cloudformation), select 'Create stack' > 'With new resources (standard)'.
 2. Under 'Prerequisite - Prepare template', ensure 'Choose an existing template' is selected, and under 'Specify template' select 'Upload a template file' and upload main.yml from the aws directory.
