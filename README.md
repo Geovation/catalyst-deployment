@@ -144,8 +144,9 @@ The code below can run either locally, or through a CloudShell terminal on the A
 - If you use the CloudShell terminal, you must first select 'Actions'>'Upload file' and upload the yaml or json code.
 - Find further details and parameters [here](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/create-stack.html).
 - In addition to the three example parameters given below, other parameters can be modified from their defaults:
-    - NGDWrapperLambdaFunctionName
-    - ONSGeographiesLambdaFunctionName
+    - APIGatewayName
+    - NGDWrapperName
+    - ONSGeographiesName
     - ApiGatewayStageName
     - S3BucketName
     - ONSGeographyDBFilePath

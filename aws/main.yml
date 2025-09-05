@@ -3,6 +3,13 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >
   Catalyst tool deployment on AWS. Includes Lambda functions and an endpoints deployed through API Gateway.
 Parameters:
+  APIGatewayName:
+    Type: String
+    MinLength: 1
+    MaxLength: 64
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+    Description: The name for the API Gateway deployment
+    Default: Catalyst
   NGDWrapperName:
     Type: String
     MinLength: 1
@@ -231,7 +238,7 @@ Resources:
   NGDWrapperLambdaRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: Lambda-NGDWrapper-Role
+      RoleName: !Sub Lambda-${NGDWrapperName}-Role
       Description: An execution role for the NGD Wrapper Lambda function
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -285,7 +292,7 @@ Resources:
   ONSGeographiesLambdaRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: Lambda-ONSGeographies-Role
+      RoleName: !Sub Lambda-${ONSGeographiesName}-Role
       Description: An execution role for the ONS Geographies Proxy
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -398,7 +405,7 @@ Resources:
   ApiGatewayRestApi:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: Catalyst
+      Name: !Ref APIGatewayName
       Description: API Gateway deployment for Geovation Catalyst tools. Deployed through CloudFormation.
       EndpointConfiguration:
         Types:
